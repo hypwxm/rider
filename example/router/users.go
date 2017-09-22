@@ -1,14 +1,13 @@
 package router
 
 import (
-	"rider/riderRouter"
 	"fmt"
-	"net/http"
+	"rider"
 )
 
 
-func Router() *riderRouter.Router {
-	router := riderRouter.NewRouter(nil)
+func Router() *rider.Router {
+	router := rider.NewRouter(nil)
 
 	/*Router.Middleware = riderRouter.MiddleWare(
 		func(w http.ResponseWriter, r *http.Request) {
@@ -18,8 +17,9 @@ func Router() *riderRouter.Router {
 
 
 	router.AddMiddleware(
-		func(w http.ResponseWriter, r *http.Request) {
+		func(context *rider.Context) {
 			fmt.Println("middleware_root")
+			context.Next()
 		},
 	)
 
@@ -39,33 +39,37 @@ func Router() *riderRouter.Router {
 	Router.USE("/middle", route)*/
 
 	//var User = router.NewRouter(nil)
-	router.POST("/user", &riderRouter.Router{
-		Handler: func(w http.ResponseWriter, r *http.Request) {
+	router.POST("/user", &rider.Router{
+		Handler: func(context *rider.Context) {
 			fmt.Println("xxx")
 		},
-		Middleware: riderRouter.MiddleWare(
-			func(w http.ResponseWriter, r *http.Request) {
+		Middleware: rider.MiddleWare(
+			func(context *rider.Context) {
 				fmt.Println("middleware1")
+				context.Next()
 			},
-			func(w http.ResponseWriter, r *http.Request) {
+			func(context *rider.Context) {
 				fmt.Println("middleware2")
+				context.Next()
 			},
-			func(w http.ResponseWriter, r *http.Request) {
+			func(context *rider.Context) {
+				context.Next()
+				return
 				fmt.Println("middleware3")
 			},
 		),
 	})
-	router.ANY("/kong", &riderRouter.Router{})
+	router.ANY("/kong", &rider.Router{})
 
 	router.AddMiddleware(
-		func(w http.ResponseWriter, r *http.Request) {
+		func(context *rider.Context) {
 			fmt.Println("next")
 		},
 	)
 
 
-	router.GET("/getuser", &riderRouter.Router{
-		Handler: func(w http.ResponseWriter, r *http.Request) {
+	router.GET("/getuser", &rider.Router{
+		Handler: func(context *rider.Context) {
 			fmt.Println("zzz")
 		},
 	})

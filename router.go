@@ -1,33 +1,23 @@
 //package router
 //路由注册模块，注册http请求（Get,Post,Delete,Option...via）
-package riderRouter
+package rider
 
 import (
 	"net/http"
 	"sync"
-	"rider/riderServer"
 	"path/filepath"
 	"log"
 	"strings"
+	"container/list"
 )
 
-type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
-func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h(w, r)
-}
-
-type BaseHandler interface {
-	ServeHTTP (w http.ResponseWriter, r *http.Request)
-}
-
-
-//根路由或者子路由需要实现的方法
+//跟路由和子路由需要实现的方法
 type BaseRouter interface {
 	ANY(path string, router *Router) *Router
 	POST(path string, router *Router)
-	GetServer() *riderServer.HttpServer
-	SetServer() *riderServer.HttpServer
+	GetServer() *HttpServer
+	SetServer() *HttpServer
 	registerHandler(method string, path string, router *Router)
 	//ServerFile(path string, fileRoot string)
 	GET(path string, router *Router)
@@ -46,33 +36,36 @@ type BaseRouter interface {
 type Routers struct {
 	routers           map[string]*Router
 	mux               *sync.Mutex
-	server            *riderServer.HttpServer
+	server            *HttpServer
 	Middleware        []HandlerFunc
-	PathMiddleware	  map[string][]HandlerFunc
+	PathMiddleware    map[string][]HandlerFunc
 	registeredRouters RegisteredRouters
 }
 
 //子路由配置
 type Router struct {
-	SubRouter  RegisteredRouters
-	mux        *sync.Mutex
-	Handler    HandlerFunc
-	Middleware []HandlerFunc
-	PathMiddleware	  map[string][]HandlerFunc
-	Method     string
-	FullPath   string
-	server     *riderServer.HttpServer
-	rootPath   string
-	currentPath string
-	rootMethod string
+	SubRouter      RegisteredRouters
+	mux            *sync.Mutex
+	Handler        HandlerFunc
+	Middleware     []HandlerFunc
+	PathMiddleware map[string][]HandlerFunc
+	Method         string
+	FullPath       string
+	server         *HttpServer
+	rootPath       string
+	currentPath    string
+	rootMethod     string
+	handlerList *list.List //中间件加处理函数链表
 }
 
 type handlerRouter map[string]*Router
 
 type RegisteredRouters map[string]handlerRouter
 
+//RegisteredRouters的锁，全局的路由都放在这里，最后调用run
 var RegisteredRoutersMux = new(sync.Mutex)
 
+//创建一个全局的路由管理中心
 var registeredRouters = make(RegisteredRouters)
 
 func (rr RegisteredRouters) NewHandle() handlerRouter {
@@ -99,59 +92,83 @@ func (rr RegisteredRouters) NewRouter(method string, pattern string, router *Rou
 		rr.NewPath(pattern)
 		rr[pattern][method] = router
 		RegisteredRoutersMux.Unlock()
+
+		//形成中间件加主处理函数链表
+		router.handlerList = list.New()
+		if len(router.PathMiddleware) > 0 {
+			for _, middleware := range router.PathMiddleware[router.currentPath] {
+				router.handlerList.PushBack(middleware)
+			}
+		}
+		if router.Handler != nil {
+			router.handlerList.PushBack(router.Handler)
+		}
 	} else if registerStatus == 2 {
 		log.Fatalln(method + " " + pattern + " 已注册，请勿重复注册同一个http方法和请求路径")
 		return
 	}
 }
 
-
 //根路由初始化方法
 func NewRouters() *Routers {
 	return &Routers{
 		mux:               new(sync.Mutex),
 		registeredRouters: registeredRouters,
-		routers: make(map[string]*Router),
-		PathMiddleware: make(map[string][]HandlerFunc),
+		routers:           make(map[string]*Router),
+		PathMiddleware:    make(map[string][]HandlerFunc),
 	}
 }
 
 //子路由初始化方法
 func NewRouter(handler HandlerFunc) *Router {
 	return &Router{
-		SubRouter: make(RegisteredRouters),
-		Handler:   handler,
-		mux:       new(sync.Mutex),
+		SubRouter:      make(RegisteredRouters),
+		Handler:        handler,
+		mux:            new(sync.Mutex),
 		PathMiddleware: make(map[string][]HandlerFunc),
 	}
 }
 
+//实际注册http服务的地方
 func (r *Routers) Run() {
 	for path, handler := range registeredRouters {
 		r.server.ServerMux.Handle(path, handler)
 	}
 }
 
-func (r *Routers) GetRegisteredRouters() RegisteredRouters {
-	return registeredRouters
+func (h handlerRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	response := basePool.response.Get().(*Response)
+	request := basePool.request.Get().(*Request)
+	context := basePool.context.Get().(*Context)
+	response.reset(w)
+	request.reset(r)
+	context.reset(response, request)
+	h.RiderServeHTTP(context)
+	response.release()
+	basePool.response.Put(response)
+	request.release()
+	basePool.request.Put(request)
+	context.release()
+	basePool.context.Put(context)
+
 }
 
-
-
-func (h handlerRouter) ServeHTTP (w http.ResponseWriter, req *http.Request) {
+func (h handlerRouter) RiderServeHTTP(context *Context) {
+	req := context.Request
+	w := context.Response
 	//请求的路径
-	reqPath := req.URL.Path
+	reqPath := req.Path()
 	//请求的http方法
-	reqMethod := req.Method
-	if strings.ToUpper(req.Method) == http.MethodOptions {
+	reqMethod := req.Method()
+	if strings.ToUpper(reqMethod) == http.MethodOptions {
 		allows := allow(reqPath)
-		w.Header().Set("allow", allows)
+		w.SetHeader("allow", allows)
 		return
 	}
 
 	var (
 		finalRouter *Router
-		anyRoute *Router
+		anyRoute    *Router
 	)
 
 	//如果方法里面有匹配的处理，则会按照改方法处理，
@@ -164,7 +181,7 @@ func (h handlerRouter) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 
 		if method != "ANY" {
 			if method == reqMethod {
-				router.doHandlers(w, req)
+				router.doHandlers(context)
 				return
 			}
 			finalRouter = router
@@ -172,42 +189,36 @@ func (h handlerRouter) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 	}
 
 	if anyRoute != nil {
-		anyRoute.doHandlers(w, req)
+		anyRoute.doHandlers(context)
 		return
 	}
 
 	//当没有任何可匹配的请求响应时，用全局的server（所有的router保存的都是全局的server）来响应404
-	finalRouter.server.Error(w, "not found", http.StatusNotFound)
+	finalRouter.server.Error(w.writer, "not found", http.StatusNotFound)
 }
 
 //请求方式匹配后将执行该路由注册的handlers和middleware
-func (r *Router) doHandlers(w http.ResponseWriter, req *http.Request) {
+func (r *Router) doHandlers(context *Context) {
 	//未注册任何中间件和处理方式，直接返回404
 	if len(r.PathMiddleware[r.currentPath]) == 0 && r.Handler == nil {
-		r.server.Error(w, "not found", http.StatusNotFound)
+		r.server.Error(context.Response.writer, "not found", http.StatusNotFound)
 		return
 	}
 
-	//先处理中间件函数（如果存在）
-	if len(r.PathMiddleware[r.currentPath]) > 0 {
-		for _, handle := range r.PathMiddleware[r.currentPath] {
-			handle(w, req)
-		}
-	}
-
-	//处理完中间件，处理最终函数（如果存在）
-	if r.Handler != nil {
-		r.Handler(w, req)
+	//执行中间件的链表处理，必须调用context.Next()才能执行下一个处理函数
+	if r.handlerList.Len() > 0 {
+		context.handlerList = r.handlerList
+		context.StartHandleList()
 	}
 }
 
 //获取根路由内部的服务来源
-func (r *Routers) GetServer() *riderServer.HttpServer {
+func (r *Routers) GetServer() *HttpServer {
 	return r.server
 }
 
 //将服务注入根路由
-func (r *Routers) SetServer(server *riderServer.HttpServer) {
+func (r *Routers) SetServer(server *HttpServer) {
 	r.server = server
 }
 
@@ -251,7 +262,7 @@ func allow(path string) string {
 }
 
 //获取所有已注册的路由
-func GetRegisteredRouters () map[string]handlerRouter {
+func GetRegisteredRouters() RegisteredRouters {
 	return registeredRouters
 }
 
@@ -281,12 +292,12 @@ func MatchMethodAndPath(method string, path string, registeredRouters Registered
 }
 
 //获取子路由内部的服务来源
-func (r *Router) SetServer(server *riderServer.HttpServer) {
+func (r *Router) SetServer(server *HttpServer) {
 	r.server = server
 }
 
 //将服务注入子路由
-func (r *Router) GetServer() *riderServer.HttpServer {
+func (r *Router) GetServer() *HttpServer {
 	return r.server
 }
 
@@ -406,8 +417,6 @@ func (r *Routers) TRACE(path string, router *Router) {
 	r.RegisterRouter("TRACE", path, router)
 }
 
-
-
 //重制Router内的所有数据
 func (r *Router) Reset() *Router {
 	route := NewRouter(nil)
@@ -458,27 +467,23 @@ func MiddleWare(handlers ...HandlerFunc) []HandlerFunc {
 //子路由对应的各个http方法的总注册入口
 //当多个rootPath路由到r时，由于currentPath相同，
 //用currentPath注册会将之前的覆盖掉，由于指针引用，其实引用的都是同一个，最后一次的改变会对之前所有注册同一个路由的router产生影响
-//所以在path后暂时加个字符串（@#），然后最后注册时回去掉
 func (r *Router) RegisterRouter(method string, path string, router *Router) {
+	if ok := r.NewSubRouter(method, path, router); ok {
+		return
+	}
+	// ..//../ -> /
+	pattern := filepath.Clean(r.rootPath + path)
 
+	//如果根方法（rider注册的http方法）部位ANY,并且子方法不为ANY && 子方法和根方法不同，将不会注册该路由
+	r.matchHTTPMethod(method, pattern, router)
 
-		if ok := r.NewSubRouter(method, path, router); ok {
-			return
-		}
-		// ..//../ -> /
-		pattern := filepath.Clean(r.rootPath + path)
+	router.InitParams(method, r.rootPath, pattern, path)
 
-		//如果根方法（rider注册的http方法）部位ANY,并且子方法不为ANY && 子方法和根方法不同，将不会注册该路由
-		r.matchHTTPMethod(method, pattern, router)
+	registeredRouters.NewRouter(method, pattern, router)
 
-		router.InitParams(method, r.rootPath, pattern, path)
-
-		registeredRouters.NewRouter(method, pattern, router)
-
-		if len(router.PathMiddleware[path]) == 0 && router.Handler == nil {
-			log.Println("未被使用的路由：", r.rootPath+path)
-			return
-		}
+	if len(router.PathMiddleware[path]) == 0 && router.Handler == nil {
+		log.Println("未被使用的路由：", r.rootPath+path)
+	}
 	//r.server.ServerMux.Handle(pattern, router)
 }
 
@@ -531,6 +536,4 @@ func (r *Router) matchHTTPMethod(method string, pattern string, router *Router) 
 	}
 }
 
-func (r *Router) registerRouter(routeMethod string, path string, router *Router) {
-
-}
+func (r *Router) RiderServeHTTP(context *Context) {}
