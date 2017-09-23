@@ -59,13 +59,14 @@ func main() {
 		},
 	})*/
 
-	app.GET("/login/next/sub", &rider.Router{
+	app.GET("/xx/:id/:id2", &rider.Router{
 		Handler: func(c *rider.Context) {
-			c.Response.Send("ssdsdad")
+			c.Response.Send(c.Request.Param("id") + ";adad " + c.Request.Param("id2"))
 		},
 	})
 
 	app.ANY("/login", user.Router())
+
 	//app.ANY("/ha", user.Router())
 
 	/*app.AddMiddleware(

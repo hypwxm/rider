@@ -1,3 +1,15 @@
+/*
+*	路由为内部主要模块，不提供对用实现接口，请遵照一下要求：
+*	1: 路由同名者，同HTTP路由重复注册，会在注册时panic；
+*	2: 同名路由存在ANY以外的方法时，会选择客户端请求的方法作为响应，当没有其他方法，会响应ANY方法
+*	3: 多层级子路由注册时，必须保持子路由的HTTP方法和父级路由的关系为（1:相同； 2:其中一个或两个为ANY）否者panic
+*	4: 中间件注册统一为路由实例的AddMiddleware方法（中间分为根路由中间件，子路由中间件，和路由内部中间件），详情参阅example的middleware模块
+	5: 调用下一个中间件为context.Next()，不调用将不会继续往下执行。
+*	6: 服务启动入口为rider.Listen(port:":8000")；默认端口":8000"；
+*	7: 所有的路由都是维护在一个初始化的变量内部registeredRouters;
+*	8: 支持无限极子路由，会一层一层的检测，当前层是否会有1，2情况的发生。如有1，2的情况发生，请注意错误，不会定位到完整路由。
+*/
+
 package rider
 
 import (
@@ -22,6 +34,7 @@ type baseRider interface {
 type rider struct {
 	server     *HttpServer   //注册服务用的serveMu，全局统一
 	routers    *Router
+	notFound *Router  //检测进来的请求注册没，响应全局的notFound
 }
 
 //初始化服务入口组建
@@ -42,9 +55,6 @@ func NewRootRouter() *Router {
 	return _router
 }
 
-func (r *rider) Run() {
-	r.routers.Run()
-}
 
 //提供端口监听服务，监听rider里面的serveMux,调用http自带的服务启用方法
 func (r *rider) Listen(port string) {
@@ -52,10 +62,9 @@ func (r *rider) Listen(port string) {
 	if port == "" {
 		port = addr
 	}
-	r.Run()
 	server := &http.Server{
 		Addr:           port,
-		Handler:        r.server.ServerMux,
+		Handler:        r.routers,
 		ReadTimeout:    readTimeout,
 		WriteTimeout:   writerTimeout,
 		MaxHeaderBytes: maxHeaderBytes,
@@ -63,7 +72,7 @@ func (r *rider) Listen(port string) {
 	err := server.ListenAndServe()
 	//err := http.ListenAndServe(port, r.server.ServerMux)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("[error] ", err)
 	}
 }
 
@@ -151,3 +160,4 @@ func (r *rider) GetServer() *HttpServer {
 func (r *rider) AddMiddleware(handlers ...HandlerFunc) {
 	r.routers.Middleware = append(r.routers.Middleware, handlers...)
 }
+

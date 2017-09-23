@@ -46,3 +46,4 @@ func (h *HttpServer) Error(w http.ResponseWriter, error string, code int) {
 	w.WriteHeader(code)
 	fmt.Fprintln(w, error)
 }
+

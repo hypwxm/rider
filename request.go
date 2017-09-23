@@ -15,7 +15,9 @@ type Request struct {
 	postBody   []byte
 	isReadBody bool
 	requestID  string
+	params   map[string]string
 }
+
 
 func NewRequest(r *http.Request) *Request {
 	return (&Request{}).reset(r)
@@ -25,6 +27,7 @@ func NewRequest(r *http.Request) *Request {
 func (req *Request) reset(r *http.Request) *Request {
 	req.request = r
 	req.isReadBody = false
+	req.params = make(map[string]string, 4)
 	req.requestID = cryptos.GetUUID()
 	return req
 }
@@ -33,6 +36,7 @@ func (req *Request) release() {
 	req.request = nil
 	req.isReadBody = false
 	req.postBody = nil
+	req.params = nil
 	req.requestID = ""
 }
 
@@ -158,4 +162,18 @@ func (req *Request) Url() string {
 //获取请求的httpMethod
 func (req *Request) Method() string {
 	return req.request.Method
+}
+
+
+//获取请求的路由参数
+func (req *Request) Params() map[string]string {
+	return req.params
+}
+
+//根据参数名称获取路由参数
+func (req *Request) Param(key string) string {
+	if param, ok := req.params[key]; ok {
+		return param
+	}
+	return ""
 }
