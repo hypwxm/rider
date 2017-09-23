@@ -21,9 +21,7 @@ type baseRider interface {
 //http服务的入口，用户初始化和缓存服务的一些信息
 type rider struct {
 	server     *HttpServer   //注册服务用的serveMu，全局统一
-	Middleware []HandlerFunc //全局的中间件，惠安循序
-	routers    *Routers
-	Method     string
+	routers    *Router
 }
 
 //初始化服务入口组建
@@ -31,13 +29,16 @@ func New() *rider {
 	server := &HttpServer{ServerMux: http.NewServeMux()}
 	return &rider{
 		server:  server,
-		routers: NewRouters(),
+		routers: NewRootRouter(),
 	}
 }
 
-func (r *rider) NewRouter() *Router {
-	_router := NewRouter(nil)
-	_router.SetServer(r.server)
+func NewRootRouter() *Router {
+	_router := NewRouter()
+	_router.isRoot = true
+	_router.fullPath = "/"
+	_router.rootPath = "/"
+	_router.Method = "ANY"
 	return _router
 }
 
@@ -71,7 +72,7 @@ func (r *rider) Listen(port string) {
 //router：这个根路径对应的子路由入口。
 func (r *rider) registerRiderRouter(method string, path string, router *Router) {
 	//将app的中间处理函数传给routers根路由(后面再由routers传给其各个子路由)
-	r.routers.AppendMiddleware(path, r.Middleware...)
+	//r.routers.FrontMiddleware(r.Middleware...)
 	//将服务注入这个组建根路由，确保路由是创立在这个服务上
 	r.routers.SetServer(r.server)
 	//将服务注入这个组建子路由，确保路由是创立在这个服务上
@@ -148,5 +149,5 @@ func (r *rider) GetServer() *HttpServer {
 
 //为app服务添加中间处理
 func (r *rider) AddMiddleware(handlers ...HandlerFunc) {
-	r.Middleware = append(r.Middleware, handlers...)
+	r.routers.Middleware = append(r.routers.Middleware, handlers...)
 }

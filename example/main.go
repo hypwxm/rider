@@ -5,7 +5,6 @@ import (
 	user "rider/example/router"
 	//user2 "rider/example/router2"
 	"fmt"
-	"errors"
 )
 
 type pint int
@@ -36,7 +35,7 @@ func main() {
 	}
 
 
-	app.POST("/haa", &rider.Router{
+	/*app.POST("/haa", &rider.Router{
 		Handler:func(c *rider.Context) {
 			//c.Response.Send(`{"a":"1"}`)
 			//c.Response.SetContentType("application/json")
@@ -58,13 +57,18 @@ func main() {
 			//c.Response.Send(a)
 
 		},
+	})*/
+
+	app.GET("/login/next/sub", &rider.Router{
+		Handler: func(c *rider.Context) {
+			c.Response.Send("ssdsdad")
+		},
 	})
 
-
-
 	app.ANY("/login", user.Router())
+	//app.ANY("/ha", user.Router())
 
-	app.AddMiddleware(
+	/*app.AddMiddleware(
 		func(context *rider.Context) {
 			fmt.Println("appnext")
 			context.Next()
@@ -82,6 +86,6 @@ func main() {
 				fmt.Println("justrouter_middleware")
 			},
 		),
-	})
+	})*/
 	app.Listen(":8000")
 }

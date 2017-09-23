@@ -13,9 +13,7 @@ func main() {
 
 	//new一个rider，创建一个app
 	app := rider.New()
-	app.AddMiddleware(
-		crocess,
-	)
+
 	/*app.GET("/haa", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("haaaa")
 	})*/

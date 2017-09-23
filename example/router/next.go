@@ -6,7 +6,7 @@ import (
 )
 
 
-func Router() *rider.Router {
+func Router3() *rider.Router {
 	router := rider.NewRouter()
 
 	router.AddMiddleware(
@@ -21,19 +21,19 @@ func Router() *rider.Router {
 			c.Response.Send("xxxx")
 		},
 	})
+	router.AddMiddleware(
+		func(context *rider.Context) {
+			fmt.Println("middleware_root2")
+			context.Next()
+		},
+	)
 	router.POST("/sub", &rider.Router{
 		Handler: func(c *rider.Context) {
 			c.Response.Send("post")
 		},
 	})
-	router.ANY("/next", Router3())
 
-	router.AddMiddleware(
-		func(context *rider.Context) {
-			fmt.Println("middleware_rootp")
-			context.Next()
-		},
-	)
+
 
 	return router
 }

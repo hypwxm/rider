@@ -7,7 +7,7 @@ import (
 
 
 func Router2() *rider.Router {
-	router := rider.NewRouter(nil)
+	router := rider.NewRouter()
 
 	/*Router.Middleware = riderRouter.MiddleWare(
 		func(w http.ResponseWriter, r *http.Request) {
