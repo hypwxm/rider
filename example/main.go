@@ -5,6 +5,7 @@ import (
 	user "rider/example/router"
 	//user2 "rider/example/router2"
 	"fmt"
+	"errors"
 )
 
 type pint int
@@ -40,6 +41,8 @@ func main() {
 			//c.Response.Send(`{"a":"1"}`)
 			//c.Response.SetContentType("application/json")
 
+			panic(errors.New("adadad"))
+
 			x := c.Request.QueryStrings()
 			fmt.Println(x["xx"] == nil)
 			//wd, _ := os.Getwd()
@@ -52,13 +55,15 @@ func main() {
 					"a":[]int{1,2,3},
 				},
 			})
-
 			//c.Response.Send(a)
 
 		},
 	})
 
+
+
 	app.ANY("/login", user.Router())
+
 	app.AddMiddleware(
 		func(context *rider.Context) {
 			fmt.Println("appnext")

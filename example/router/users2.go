@@ -6,7 +6,7 @@ import (
 )
 
 
-func Router() *rider.Router {
+func Router2() *rider.Router {
 	router := rider.NewRouter(nil)
 
 	/*Router.Middleware = riderRouter.MiddleWare(
@@ -19,19 +19,11 @@ func Router() *rider.Router {
 	router.AddMiddleware(
 		func(context *rider.Context) {
 			fmt.Println("middleware_root")
+			fmt.Println("xxx")
 			context.Next()
 		},
 	)
 
-	route := rider.NewRouter(nil)
-
-
-	router.ANY("/middle", Router2())
-	route.GET("/sub", &rider.Router{
-		Handler: func(c *rider.Context) {
-			c.Response.Send("xxxx")
-		},
-	})
 
 	//var User = router.NewRouter(nil)
 	router.POST("/user", &rider.Router{
