@@ -18,7 +18,7 @@ func Router3() *rider.Router {
 
 	router.GET("/sub", &rider.Router{
 		Handler: func(c *rider.Context) {
-			c.Response.Send("xxxx")
+			c.Send([]byte("xxxx"))
 		},
 	})
 	router.AddMiddleware(
@@ -29,7 +29,7 @@ func Router3() *rider.Router {
 	)
 	router.POST("/sub", &rider.Router{
 		Handler: func(c *rider.Context) {
-			c.Response.Send("post")
+			c.Send([]byte("post"))
 		},
 	})
 

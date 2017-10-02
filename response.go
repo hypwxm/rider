@@ -6,8 +6,10 @@ import (
 	"bufio"
 	"io"
 	"errors"
-	"fmt"
 	"encoding/json"
+	"runtime/debug"
+	"log"
+	"time"
 )
 
 
@@ -20,6 +22,7 @@ type (
 		committed bool
 		header    http.Header
 		isEnd     bool
+		isHijack  bool
 	}
 
 	gzipResponseWriter struct {
@@ -36,18 +39,15 @@ func (r *Response) Header() http.Header {
 	return r.header
 }
 
-func (r *Response) QueryHeader(key string) string {
+
+func (r *Response) HeaderValue(key string) string {
 	return r.Header().Get(key)
 }
 
-func (r *Response) Redirect(code int, targetUrl string) error {
+func (r *Response) Redirect(code int, targetUrl string) {
 	r.Header().Set("Catch-Control", "no-cache")
 	r.Header().Set("Location", targetUrl)
-	return r.WriteHeader(code)
-}
-
-func (r *Response) Writer() http.ResponseWriter {
-	return r.writer
+	r.SetStatusCode(code)
 }
 
 func (r *Response) SetWriter(w http.ResponseWriter) *Response {
@@ -55,12 +55,8 @@ func (r *Response) SetWriter(w http.ResponseWriter) *Response {
 	return r
 }
 
-func (r *Response) Body() []byte {
-	return r.body
-}
-
-func (r *Response) BodyString() string {
-	return string(r.body)
+func (r *Response) AddHeader(key, value string) {
+	r.Header().Add(key, value)
 }
 
 func (r *Response) SetHeader(key, val string) {
@@ -71,63 +67,43 @@ func (r *Response) SetContentType(contenttype string) {
 	r.SetHeader("Content-Type", contenttype)
 }
 
-func (r *Response) SetStatusCode(code int) error {
-	return r.WriteHeader(code)
-}
-
-// WriteHeader sends an HTTP response header with status code. If WriteHeader is
+// SetStatusCode sends an HTTP response header with status code. If WriteHeader is
 // not called explicitly, the first call to Write will trigger an implicit
 // WriteHeader(http.StatusOK). Thus explicit calls to WriteHeader are mainly
 // used to send error codes.
-func (r *Response) WriteHeader(code int) error {
+func (r *Response) SetStatusCode(code int) {
 	if r.committed {
-		panic("response already set status")
-		return errors.New("response already set status")
+		log.Panic(errors.New("response already set status"), "\n", string(debug.Stack()))
 	}
 	r.Status = code
 	r.writer.WriteHeader(code)
 	r.committed = true
-	return nil
-}
-
-// Write writes the data to the connection as part of an HTTP reply.
-func (r *Response) Write(code int, b []byte) (n int, err error) {
-	if !r.committed {
-		r.WriteHeader(code)
-	}
-	n, err = r.writer.Write(b)
-	r.Size += int64(n)
-	r.body = append(r.body, b[0:]...)
-	return
 }
 
 //给client发送消息，json，text，html，xml...(不发送模板,模板请用render)
-func (r *Response) Send(data interface{}) {
+func (r *Response) Send(data []byte) (size int) {
 	if !r.committed {
 		r.SetStatusCode(http.StatusOK)
 	}
 
 	if r.isEnd {
-		panic("sent again after res was sent")
+		log.Panic(errors.New("sent again after res was sent"), "\n", string(debug.Stack()))
 	}
 
-	switch t := data.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, string:
-		fmt.Fprintf(r.writer, "%v", t)
-	//case []int, []int8, []int16, []int32, []int64, []uint, []uint8, []uint16, []uint32, []uint64, []float32, []float64, []string:
-	case []byte:
-		fmt.Fprintf(r.writer, "%v", t)
-	default:
-		jsonData, err := json.Marshal(t)
-		if err != nil {
-			fmt.Fprintf(r.writer, "%v", t)
-		} else {
-			r.writer.Write([]byte(jsonData))
-		}
-	}
-	r.isEnd = true
+	r.End()
+	r.writer.Write(data)
+	return len(data)
+}
 
-	//r.writer.Write([]byte(data))
+//发送json格式的数据
+func (r *Response) SendJson(data interface{}) (size int) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+	r.SetContentType("application/json;charset=utf-8")
+	r.Send(jsonData)
+	return len(jsonData)
 }
 
 //stop current response
@@ -158,6 +134,7 @@ func (r *Response) reset(w http.ResponseWriter) *Response {
 	r.committed = false
 	r.isEnd = false
 	r.body = []byte{}
+	setBaseResHeader(r.Header())
 	return r
 }
 
@@ -172,3 +149,21 @@ func (r *Response) release() {
 	r.committed = false
 }
 
+
+//设置cookies
+func (r *Response) SetCookie(cookie http.Cookie) {
+	http.SetCookie(r.writer, &cookie)
+}
+
+
+
+//设置一些基本的响应头信息
+func setBaseResHeader(header http.Header) {
+	header.Set("Server", "rider")
+	header.Set("X-DNS-Prefetch-Control", "off")
+	header.Set("X-Download-Options", "noopen")
+	header.Set("X-Frame-Options", "SAMEORIGIN")
+	header.Set("X-Content-Type-Options", "nosniff")
+	header.Set("Connection", "keep-alive")
+	header.Set("Date", time.Now().Format(time.RFC822))
+}

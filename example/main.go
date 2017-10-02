@@ -5,19 +5,29 @@ import (
 	user "rider/example/router"
 	//user2 "rider/example/router2"
 	"fmt"
+	"flag"
+	"net/http"
 )
 
 type pint int
 
 func crocess(c *rider.Context) {
 	fmt.Println("middleware_app")
-	c.Response.SetHeader("Access-Control-Allow-Origin", "*")
+
+	c.SetHeader("Access-Control-Allow-Origin", "*")
+	//c.Send([]byte("xxx"))
+	//return
+	//time.Sleep(10e9)
+	c.SetLocals("locals", "adada")
 	c.Next()
 }
 
 func main() {
 
+	env := flag.String("env", rider.ENV_Development, "设置app环境变量")
+	flag.Parse()
 
+	rider.SetEnvMode(*env)
 
 	//new一个rider，创建一个app
 	app := rider.New()
@@ -61,7 +71,27 @@ func main() {
 
 	app.GET("/xx/:id/:id2", &rider.Router{
 		Handler: func(c *rider.Context) {
-			c.Response.Send(c.Request.Param("id") + ";adad " + c.Request.Param("id2"))
+			c.Hijack()
+
+			c.CookieValue("xxx")
+
+			c.ResCookie(http.Cookie{
+				Name: "xxx",
+				Value: "yyy=awdad",
+				Path: "/",  // optional
+				MaxAge: 100,
+			})
+			c.ResCookie(http.Cookie{
+				Name: "ad",
+				Value: "yyy",
+				Path: "/",  // optional
+				MaxAge: -1,
+			})
+			fmt.Println(c.ResponseHeader())
+
+			fmt.Println("xxx")
+			c.Send([]byte("xx"))
+			//fmt.Println(file[0])
 		},
 	})
 

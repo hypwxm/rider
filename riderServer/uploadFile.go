@@ -56,7 +56,6 @@ func (f *UploadFile) SaveFile(fileName string) (size int64, err error) {
 	if fileName == "" {
 		return size, errors.New("filename not allow empty")
 	}
-
 	fileWriter, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return size, err

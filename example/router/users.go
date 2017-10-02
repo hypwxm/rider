@@ -18,12 +18,12 @@ func Router() *rider.Router {
 
 	router.GET("/sub", &rider.Router{
 		Handler: func(c *rider.Context) {
-			c.Response.Send("xxxx")
+			c.Send([]byte("xxxx"))
 		},
 	})
 	router.POST("/sub", &rider.Router{
 		Handler: func(c *rider.Context) {
-			c.Response.Send("post")
+			c.Send([]byte("post"))
 		},
 	})
 	router.ANY("/next", Router3())

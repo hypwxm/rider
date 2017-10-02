@@ -3,7 +3,9 @@ package rider
 import (
 	"net/http"
 	"sync"
-	"fmt"
+	"runtime/debug"
+	"log"
+	"errors"
 )
 
 type HttpServer struct {
@@ -13,7 +15,7 @@ type HttpServer struct {
 type pool struct {
 	request  *sync.Pool
 	response *sync.Pool
-	context *sync.Pool
+	context  *sync.Pool
 }
 
 //全局的pool
@@ -39,11 +41,32 @@ func (h *HttpServer) NewHttpServer() *HttpServer {
 	return &HttpServer{}
 }
 
-
-func (h *HttpServer) Error(w http.ResponseWriter, error string, code int) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(code)
-	fmt.Fprintln(w, error)
+func HttpError(c *Context, err string, code int) error {
+	if c.isEnd {
+		return errors.New("response sent again")
+	}
+	c.End()
+	hijacker, errh := c.Hijack()
+	if errh != nil {
+		return errh
+	}
+	hijacker.SetStatusCode(code)
+	errMsg := &Error{
+		StatusCode: code,
+		StatusText: http.StatusText(code),
+		Error:      err,
+	}
+	if GlobalENV == ENV_Production {
+		errMsg.Stack = ""
+	}
+	if GlobalENV == ENV_Development {
+		errMsg.Stack = string(debug.Stack())
+	}
+	if GlobalENV == ENV_Debug {
+		log.Println(err)
+		log.Println(string(debug.Stack()))
+		errMsg.Stack = string(debug.Stack())
+	}
+	hijacker.SendJson(errMsg)
+	return nil
 }
-

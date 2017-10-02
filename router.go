@@ -9,7 +9,6 @@ import (
 	"log"
 	"strings"
 	"container/list"
-	"runtime/debug"
 )
 
 //跟路由和子路由需要实现的方法
@@ -102,56 +101,66 @@ func NewRouter() *Router {
 	}
 }
 
+//判断注册的路由里面和请求的路由是否匹配，包括路由参数匹配
 func (r *Router) getByPath(path string, request *Request) handlerRouter {
-	var paramsRouter handlerRouter
 	walk:
 	for k, v := range r.subRouter {
 		if path == k {
 			return v
 		} else {
+			//拆解定义的路由
 			params := strings.Split(k, "/")
+			//拆解请求的路由
 			pathParams := strings.Split(path, "/")
+			//比较拆解的两个切片的长度，如果长度不一样，肯定就不匹配
 			if len(params) != len(pathParams) {
 				continue
 			}
+			//如果长度相等了，就按顺序匹配每一个字段
 			for pIndex, param := range params {
+				//  ":"开头的说明是路由参数，
 				if !(strings.HasPrefix(param, ":")) {
 					if pathParams[pIndex] != param {
+						request.params = make(map[string]string)
 						continue walk
 					}
+				} else {
+					paramName := strings.TrimPrefix(param, ":")
+					request.params[paramName] = pathParams[pIndex]
+					if pIndex == len(params)-1 {
+						return v
+					}
 				}
-				paramName := strings.TrimPrefix(param, ":")
-				request.params[paramName] = pathParams[pIndex]
 			}
-			paramsRouter = v
 		}
-	}
-	if paramsRouter != nil {
-		return paramsRouter
 	}
 	return nil
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
-	defer func() {
-		if err, ok := recover().(error); ok {
-			http.Error(w, "系统错误", http.StatusInternalServerError)
-			log.Println(err)
-			log.Println(string(debug.Stack()))
-		}
-	}()
 	response := basePool.response.Get().(*Response)
 	request := basePool.request.Get().(*Request)
 	context := basePool.context.Get().(*Context)
-	response.reset(w)
-	request.reset(req)
-	context.reset(response, request)
+	response = response.reset(w)
+	request = request.reset(req)
+	context = context.reset(response, request)
+
+	defer func() {
+		if err, ok := recover().(error); ok {
+			log.Println(err.Error())
+			if context.isWriteTimeout {
+				//超时的话会给客户端响应超时信息，无需发送响应
+				return
+			}
+			HttpError(context, err.Error(), http.StatusInternalServerError)
+		}
+	}()
 
 	if handler := r.getByPath(req.URL.Path, request); handler != nil {
 		handler.RiderServeHTTP(context)
 	} else {
-		response.Send("not found")
+		HttpError(context, "不合法请求路径", 404)
 	}
 
 	response.release()
@@ -163,8 +172,8 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h handlerRouter) RiderServeHTTP(context *Context) {
-	req := context.Request
-	w := context.Response
+	req := context.request
+	w := context.response
 	//请求的路径
 	reqPath := req.Path()
 	//请求的http方法
@@ -176,7 +185,6 @@ func (h handlerRouter) RiderServeHTTP(context *Context) {
 	}
 
 	var (
-		finalRouter *Router
 		anyRoute    *Router
 	)
 
@@ -193,7 +201,6 @@ func (h handlerRouter) RiderServeHTTP(context *Context) {
 				router.doHandlers(context)
 				return
 			}
-			finalRouter = router
 		}
 	}
 
@@ -203,20 +210,20 @@ func (h handlerRouter) RiderServeHTTP(context *Context) {
 	}
 
 	//当没有任何可匹配的请求响应时，用全局的server（所有的router保存的都是全局的server）来响应404
-	finalRouter.server.Error(w.writer, "not found", http.StatusNotFound)
+	HttpError(context, "该路由不支持该HTTP方法", 400)
 }
 
 //请求方式匹配后将执行该路由注册的handlers和middleware
 func (r *Router) doHandlers(context *Context) {
 	//未注册任何中间件和处理方式，直接返回404
 	if len(r.Middleware) == 0 && r.Handler == nil {
-		r.server.Error(context.Response.writer, "not found", http.StatusNotFound)
+		HttpError(context, "registered but been not used", 404)
 		return
 	}
 	//执行中间件的链表处理，必须调用context.Next()才能执行下一个处理函数
 	if r.handlerList != nil && r.handlerList.Len() > 0 {
 		context.handlerList = r.handlerList
-		context.StartHandleList()
+		context.startHandleList()
 	}
 }
 

@@ -21,9 +21,16 @@ import (
 const (
 	addr           = ":8000"
 	readTimeout    = 30 * time.Second
-	writerTimeout  = 30 * time.Second
+	writerTimeout  = 5 * time.Second
 	maxHeaderBytes = 1 << 20 //1MB
+	defaultMultipartBodySze = 32 << 20
+	ENV_Production = "production"
+	ENV_Development = "development"
+	ENV_Debug = "debug"
 )
+
+//默认的执行的系统的环境，生产者环境
+var GlobalENV = ENV_Production
 
 type baseRider interface {
 	Listen(port string) //:5000
@@ -32,10 +39,22 @@ type baseRider interface {
 
 //http服务的入口，用户初始化和缓存服务的一些信息
 type rider struct {
-	server     *HttpServer   //注册服务用的serveMu，全局统一
-	routers    *Router
-	notFound *Router  //检测进来的请求注册没，响应全局的notFound
+	server   *HttpServer //注册服务用的serveMu，全局统一
+	routers  *Router
+	notFound *Router //检测进来的请求注册没，响应全局的notFound
 }
+
+//设置环境
+func SetEnvMode(mode string) {
+	if mode == "production" {
+		GlobalENV = ENV_Production
+	} else if mode == "development" {
+		GlobalENV = ENV_Development
+	} else if mode == "debug" {
+		GlobalENV = ENV_Debug
+	}
+}
+
 
 //初始化服务入口组建
 func New() *rider {
@@ -55,7 +74,6 @@ func NewRootRouter() *Router {
 	return _router
 }
 
-
 //提供端口监听服务，监听rider里面的serveMux,调用http自带的服务启用方法
 func (r *rider) Listen(port string) {
 
@@ -66,7 +84,7 @@ func (r *rider) Listen(port string) {
 		Addr:           port,
 		Handler:        r.routers,
 		ReadTimeout:    readTimeout,
-		WriteTimeout:   writerTimeout,
+		WriteTimeout:   0,
 		MaxHeaderBytes: maxHeaderBytes,
 	}
 	err := server.ListenAndServe()
@@ -160,4 +178,3 @@ func (r *rider) GetServer() *HttpServer {
 func (r *rider) AddMiddleware(handlers ...HandlerFunc) {
 	r.routers.Middleware = append(r.routers.Middleware, handlers...)
 }
-
