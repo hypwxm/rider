@@ -8,17 +8,18 @@ import (
 	"net/url"
 	"rider/riderServer"
 	"time"
+	"fmt"
 )
 
 type Contexter interface {
-	NewContext(w http.ResponseWriter, r *http.Request)                             //初始化一个Context
-	Next(err ...error)                                                                         //实现中间件的链表处理
+	//NewContext(w http.ResponseWriter, r *http.Request) *Context                            //初始化一个Context
+	Next(err ...error) error                                                       //实现中间件的链表处理
 	setCurrent(element *list.Element)                                              //设置链表中当前在处理处理器
 	setStartHandler() *list.Element                                                //设置开始处理的第一个中间件
 	getCurrentHandler() (HandlerFunc, error)                                       //获取当前处理中的中间件
 	startHandleList() error                                                        //开始处理中间件
 	release()                                                                      //释放Context
-	reset(w http.ResponseWriter, r *http.Request)                                  //初始化Context
+	reset(w *Response, r *Request) *Context                                        //初始化Context
 	SetLocals(key string, value interface{})                                       //给context传递变量，该变量在整个请求的传递中一直有效
 	GetLocals(key string) interface{}                                              //通过SetLocals设置的值可以在下个中间件中获取
 	CancelResponse()                                                               //在响应未结束前，可以随时终止响应的处理
@@ -42,38 +43,53 @@ type Contexter interface {
 	FullRemoteIP() string                                                          //获取请求来源的完整IP:PORT
 	RequestID() string                                                             //获取分配的请求id
 	IsAjax() bool                                                                  //判断请求是否为ajax
-	Cookies() []*http.Cookie   //获取请求的cookies
-	CookieValue(key string) (*http.Cookie, error)  //获取请求体中某一字段的cookie值
+	Cookies() []*http.Cookie                                                       //获取请求的cookies
+	CookieValue(key string) (string, error)                                        //获取请求体中某一字段的cookie值
 
+	End() //调用该方法表示响应已经结束
 
 	//Response
-	SetHeader(key, value string)           //设置响应头
-	AddHeader(key, value string)           //给响应头添加值
-	SetContentType(contentType string)     //给响应头设置contenttype
-	SetStatusCode(code int)                //设置响应头的状态码
-	ResponseHeader() http.Header           //获取完整的响应头信息
-	ResponseHeaderValue(key string) string //获取响应头的某一字段值
-	Redirect(code int, targetUrl string)   //重定向
-	Send(data []byte)                      //给客户端发送响应
-	SendJson(data interface{})             //响应json格式的数据
-	ResCookie(cookie http.Cookie) //设置响应的cookie
-	RemoveCookie(cookieName http.Cookie)  //删除cookie
-	End()                                  //调用该方法表示响应已经结束
+	//Responser
+	SendHeader() http.Header           //获取完整的响应头信息
+	SendHeaderValue(key string) string //获取响应头的某一字段值
+	SendCookie(cookie http.Cookie)     //设置响应的cookie
+	RemoveCookie(cookieName string)    //删除cookie
+}
+
+type Responser interface {
+	SetHeader(key, value string)          //设置响应头
+	AddHeader(key, value string)          //给响应头添加值
+	SetContentType(contentType string)    //给响应头设置contenttype
+	SetStatusCode(code int)               //设置响应头的状态码
+	Header() http.Header                  //返回响应头信息
+	HeaderValue(key string) string        //返回某一字段的响应头信息
+	Redirect(code int, targetUrl string)  //重定向
+	Send(data []byte) (size int)          //给客户端发送响应,返回发送的字节长度
+	SendJson(data interface{}) (size int) //响应json格式的数据,返回发送的字节长度
+	SetCookie(cookie http.Cookie)         //设置cookie
 	//Hijack() (*HijackUp, error)  //将response升级为hijack，升级后，Send,SendJson等的相应方法也会调用hijack相关的
 }
 
+var (
+	_ Responser = &Response{}
+	_ Contexter = &Context{}
+	_ Responser = &HijackUp{}
+)
+
 type Context struct {
-	request        *Request
-	response       *Response
-	handlerList    *list.List
-	currentHandler *list.Element
-	ctx            ctxt.Context //标准包的context
-	cancel         ctxt.CancelFunc
-	isHijack       bool
-	hijacker       *HijackUp
-	isWriteTimeout bool
-	isEnd          bool
-	done chan int
+	request             *Request
+	response            *Response
+	handlerList         *list.List
+	currentHandler      *list.Element
+	ctx                 ctxt.Context //标准包的context
+	cancel              ctxt.CancelFunc
+	isHijack            bool
+	hijacker            *HijackUp
+	isWriteTimeout      bool
+	isReadyWriteTimeout bool //通知作用，通知该处理即将进入超时状态并处理超时逻辑
+	isEnd               bool
+	done                chan int
+	ended chan int
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -90,8 +106,11 @@ func (c *Context) reset(w *Response, r *Request) *Context {
 	c.handlerList = list.New()
 	c.isHijack = false
 	c.isWriteTimeout = false
+	c.hijacker = nil
 	c.isEnd = false
+	c.isReadyWriteTimeout = false
 	c.done = make(chan int)
+	c.ended = make(chan int, 1)
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
 	go c.timeout()
 	return c
@@ -105,9 +124,12 @@ func (c *Context) release() {
 	c.handlerList = list.New()
 	c.ctx = ctxt.Background()
 	c.isHijack = false
+	c.hijacker = nil
+	c.isReadyWriteTimeout = false
 	c.isWriteTimeout = false
 	c.isEnd = false
 	c.done = nil
+	c.ended = nil
 	c.hijacker = nil
 }
 
@@ -121,8 +143,9 @@ func (c *Context) timeout() {
 		return
 	case <-time.After(writerTimeout):
 		//响应超时了
-		c.isWriteTimeout = true
+		c.isReadyWriteTimeout = true
 		HttpError(c, method+" "+urlPath+" response timeout", 504)
+		c.isWriteTimeout = true
 	}
 }
 
@@ -130,18 +153,15 @@ func (c *Context) timeout() {
 func (c *Context) Next(err ...error) error {
 	if c.currentHandler == nil {
 		//未知错误
-		c.release()
 		return errors.New("unknown error of nil handler")
 	}
 	next := c.currentHandler.Next()
 	if next == nil {
 		//处理器已处理完毕，或者一些位置错误
-		c.release()
 		return errors.New("all handler was done")
 	}
 
 	if len(err) > 0 && err[0] != nil {
-		c.release()
 		HttpError(c, err[0].Error(), http.StatusInternalServerError)
 		return nil
 	}
@@ -305,8 +325,6 @@ func (c *Context) CookieValue(key string) (string, error) {
 	return c.request.CookieValue(key)
 }
 
-
-
 //设置响应头
 func (c *Context) SetHeader(key, value string) {
 	if c.isHijack {
@@ -344,34 +362,40 @@ func (c *Context) SetStatusCode(code int) {
 }
 
 //获取响应头信息
-func (c *Context) ResponseHeader() map[string][]string {
+func (c *Context) SendHeader() http.Header {
 	if c.isHijack {
-		return c.hijacker.GetHeader()
+		return c.hijacker.Header()
 	} else {
 		return c.response.Header()
 	}
 }
 
 //获取响应头的某一字段的值
-func (c *Context) ResponseHeaderValue(key string) string {
+func (c *Context) SendHeaderValue(key string) string {
 	if c.isHijack {
-		return c.hijacker.GetHeaderValue(key)
+		return c.hijacker.HeaderValue(key)
 	} else {
 		return c.response.HeaderValue(key)
 	}
 }
 
 //设置cookies
-func (c *Context) ResCookie(cookie http.Cookie) {
-	c.response.SetCookie(cookie)
+func (c *Context) SendCookie(cookie http.Cookie) {
+	if cookie.Path == "" {
+		cookie.Path = "/"
+	}
+	if c.isHijack {
+		c.hijacker.SetCookie(cookie)
+	} else {
+		c.response.SetCookie(cookie)
+	}
 }
 
 //删除cookie
 func (c *Context) RemoveCookie(cookieName string) {
-	cookie := http.Cookie{Name: cookieName, MaxAge: -1}
-	c.ResCookie(cookie)
+	cookie := http.Cookie{Name: cookieName, MaxAge: -1, Path: "/"}
+	c.SendCookie(cookie)
 }
-
 
 /*
 	if c.isWriteTimeout {
@@ -393,15 +417,6 @@ func (c *Context) Send(data []byte) {
 	}
 }
 
-//重定向
-func (c *Context) Redirect(code int, targetUrl string) {
-	if c.isWriteTimeout {
-		return
-	}
-	c.End()
-	c.response.Redirect(code, targetUrl)
-}
-
 //发送json格式数据给客户端
 func (c *Context) SendJson(data interface{}) {
 	if c.isWriteTimeout {
@@ -415,14 +430,32 @@ func (c *Context) SendJson(data interface{}) {
 	}
 }
 
+//重定向
+func (c *Context) Redirect(code int, targetUrl string) {
+	if c.isWriteTimeout {
+		return
+	}
+	c.End()
+	if c.isHijack {
+		c.hijacker.Redirect(code, targetUrl)
+	} else {
+		c.response.Redirect(code, targetUrl)
+	}
+}
+
 //通知响应结束
 func (c *Context) End() {
 	if c.isEnd {
 		return
 	}
 	c.isEnd = true
-	c.done <- 0
+	if !(c.isReadyWriteTimeout) {
+		//当状态进入超时时，不会给done传递信号
+		c.done <- 0
+	}
 	close(c.done)
+	c.ended <- 0
+	close(c.ended)
 
 	//c.CancelResponse()
 }
@@ -431,7 +464,7 @@ func (c *Context) End() {
 
 //升级responsewrite为hijack
 func (c *Context) Hijack() (*HijackUp, error) {
-	originHeader := c.ResponseHeader()
+	originHeader := c.SendHeader()
 	hj, ok := c.response.writer.(http.Hijacker)
 	if !ok {
 		return nil, errors.New("服务不支持升级hijack")

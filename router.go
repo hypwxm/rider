@@ -9,6 +9,7 @@ import (
 	"log"
 	"strings"
 	"container/list"
+	"runtime/debug"
 )
 
 //跟路由和子路由需要实现的方法
@@ -149,6 +150,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if err, ok := recover().(error); ok {
 			log.Println(err.Error())
+			log.Println(string(debug.Stack()))
 			if context.isWriteTimeout {
 				//超时的话会给客户端响应超时信息，无需发送响应
 				return
@@ -157,12 +159,15 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}()
 
+
 	if handler := r.getByPath(req.URL.Path, request); handler != nil {
 		handler.RiderServeHTTP(context)
 	} else {
 		HttpError(context, "不合法请求路径", 404)
 	}
 
+	//只有通知结束了，才能结束，客户端在为接收到响应前处于挂起状态。
+	<- context.ended
 	response.release()
 	basePool.response.Put(response)
 	request.release()

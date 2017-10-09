@@ -12,9 +12,10 @@ import (
 type HijackUp struct {
 	conn net.Conn
 	bufrw *bufio.ReadWriter
-	header map[string][]string
+	header http.Header   //header引用了转换成hijack之前的response的header，
 }
 
+//添加默认的响应头
 var defaultHijackHeader string = "HTTP/1.1 200 OK\r\n"
 
 //给客户端发送数据
@@ -57,20 +58,25 @@ func (hj *HijackUp) SendJson(data interface{}) (size int) {
 
 //给hijack添加响应头
 func (hj *HijackUp) AddHeader(key string, value string) {
+	hj.Header()
 	hj.header[key] = append(hj.header[key], value)
 }
 
 func (hj *HijackUp) SetHeader(key string, value string) {
+	hj.Header()
 	hj.header[key] = []string{value}
 }
 
 //获取响应头信息
-func (hj *HijackUp) GetHeader() map[string][]string {
+func (hj *HijackUp) Header() http.Header {
+	if hj.header == nil {
+		hj.header = make(http.Header)
+	}
 	return hj.header
 }
 
 //获取响应头某一字段的值
-func (hj *HijackUp) GetHeaderValue(key string) string {
+func (hj *HijackUp) HeaderValue(key string) string {
 	if val, ok := hj.header[key]; ok {
 		if len(val) > 0 {
 			return val[0]
@@ -96,5 +102,21 @@ func (hj *HijackUp) SetStatusCode(code int) {
 
 //设置cookie
 func (hj *HijackUp) SetCookie(cookie http.Cookie) {
+	if v := (&cookie).String(); v != "" {
+		hj.AddHeader("Set-Cookie", v)
+	}
+	//无需实行，，因为写cookie的方法时http.SetCookie(w, &http.Cookie{}) 。w实现了io.writer接口。hijack也实现了这个接口，所以直接用http.SetCookie就可以了
+}
 
+
+//重定向
+func (hj *HijackUp) Redirect(code int, targetUrl string) {
+	hj.SetHeader("Catch-Control", "no-cache")
+	hj.SetHeader("Location", targetUrl)
+	hj.SetStatusCode(code)
+}
+
+//设置contenttype
+func (hj *HijackUp) SetContentType(contentType string) {
+	hj.SetHeader("Content-Type", contentType)
 }

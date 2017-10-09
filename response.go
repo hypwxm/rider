@@ -10,6 +10,7 @@ import (
 	"runtime/debug"
 	"log"
 	"time"
+	"fmt"
 )
 
 
@@ -73,7 +74,12 @@ func (r *Response) SetContentType(contenttype string) {
 // used to send error codes.
 func (r *Response) SetStatusCode(code int) {
 	if r.committed {
-		log.Panic(errors.New("response already set status"), "\n", string(debug.Stack()))
+		if r.isEnd {
+			log.Panic(errors.New("response already sended, please do not set status anymore"), "\n", string(debug.Stack()))
+		} else {
+			log.Panic(errors.New("response already set status"), "\n", string(debug.Stack()))
+			panic("system error occurred")
+		}
 	}
 	r.Status = code
 	r.writer.WriteHeader(code)
@@ -91,6 +97,7 @@ func (r *Response) Send(data []byte) (size int) {
 	}
 
 	r.End()
+	fmt.Println(data)
 	r.writer.Write(data)
 	return len(data)
 }

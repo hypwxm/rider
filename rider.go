@@ -33,15 +33,27 @@ const (
 var GlobalENV = ENV_Production
 
 type baseRider interface {
-	Listen(port string) //:5000
-	Run()               //:5000
+	Listen(port string) //:5000  服务启动入口
+	registerRiderRouter(method string, path string, router *Router)
+	ANY(path string, router *Router)
+	GET(path string, router *Router)
+	POST(path string, router *Router)
+	HEAD(path string, router *Router)
+	OPTIONS(path string, router *Router)
+	DELETE(path string, router *Router)
+	PUT(path string, router *Router)
+	PATCH(path string, router *Router)
+	TRACE(path string, router *Router)
+	CONNECT(path string, router *Router)
+	GetServer() *HttpServer   //获取
+	AddMiddleware(handlers ...HandlerFunc)
+	Error(errorHandle func(c *Context, err string, code int))
 }
 
 //http服务的入口，用户初始化和缓存服务的一些信息
 type rider struct {
 	server   *HttpServer //注册服务用的serveMu，全局统一
 	routers  *Router
-	notFound *Router //检测进来的请求注册没，响应全局的notFound
 }
 
 //设置环境
@@ -177,4 +189,10 @@ func (r *rider) GetServer() *HttpServer {
 //为app服务添加中间处理
 func (r *rider) AddMiddleware(handlers ...HandlerFunc) {
 	r.routers.Middleware = append(r.routers.Middleware, handlers...)
+}
+
+
+//重写错误处理
+func (r *rider) Error(errorHandle func(c *Context, err string, code int)) {
+	ErrorHandle = errorHandle
 }

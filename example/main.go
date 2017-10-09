@@ -14,10 +14,12 @@ type pint int
 func crocess(c *rider.Context) {
 	fmt.Println("middleware_app")
 
+	//time.Sleep(10e9)
 	c.SetHeader("Access-Control-Allow-Origin", "*")
 	//c.Send([]byte("xxx"))
 	//return
 	//time.Sleep(10e9)
+	//panic(errors.New("adwadad"))
 	c.SetLocals("locals", "adada")
 	c.Next()
 }
@@ -38,12 +40,10 @@ func main() {
 		fmt.Println("haaaa")
 	})*/
 
-
 	type st struct {
 		A string
 		b int
 	}
-
 
 	/*app.POST("/haa", &rider.Router{
 		Handler:func(c *rider.Context) {
@@ -69,25 +69,38 @@ func main() {
 		},
 	})*/
 
+	app.GET("/", &rider.Router{
+
+	})
+
 	app.GET("/xx/:id/:id2", &rider.Router{
 		Handler: func(c *rider.Context) {
 			c.Hijack()
 
+			//c.Redirect(306, "http://mv.51mzzk.com")
 			c.CookieValue("xxx")
+			fmt.Println(c.SendHeader())
 
-			c.ResCookie(http.Cookie{
-				Name: "xxx",
-				Value: "yyy=awdad",
-				Path: "/",  // optional
+			c.SendCookie(http.Cookie{
+				Name:   "xxx",
+				Value:  "yyy=123",
+				//Path:   "/", // optional
 				MaxAge: 100,
 			})
-			c.ResCookie(http.Cookie{
-				Name: "ad",
-				Value: "yyy",
-				Path: "/",  // optional
-				MaxAge: -1,
+
+			c.AddHeader("ada", "ada")
+
+			c.SendCookie(http.Cookie{
+				Name:   "ad",
+				Value:  "100",
+				//Path:   "/", // optional
+				MaxAge: 100,
+				Domain: "mv.51mzzk.com",
 			})
-			fmt.Println(c.ResponseHeader())
+			c.RemoveCookie("ad")
+			fmt.Println(c.SendHeader())
+
+			//fmt.Println(c.ResponseHeader())
 
 			fmt.Println("xxx")
 			c.Send([]byte("xx"))
@@ -112,11 +125,18 @@ func main() {
 		Handler: func(context *rider.Context) {
 			fmt.Println("justrouter")
 		},
-		Middleware: rider.MiddleWare(
+		Middleware: rider.MiddleWare(			c.Hijack()
+
 			func(context *rider.Context) {
 				fmt.Println("justrouter_middleware")
 			},
 		),
 	})*/
+
+	app.Error(func(c *rider.Context, err string, code int) {
+		fmt.Println("ccccc")
+		c.Send([]byte(err))
+	})
+
 	app.Listen(":8000")
 }
