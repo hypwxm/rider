@@ -3,7 +3,7 @@ package riderFile
 import "os"
 
 //get filename extensions
-func GetFileExt(path string) string {
+func Ext(path string) string {
 	for i := len(path) - 1; i >= 0 && path[i] != '/'; i-- {
 		if path[i] == '.' {
 			return path[i+1:]

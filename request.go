@@ -45,6 +45,7 @@ type Request struct {
 	isReadBody bool
 	requestID  string
 	params     map[string]string
+	pathParams []string
 }
 
 func NewRequest(r *http.Request) *Request {
@@ -66,6 +67,7 @@ func (req *Request) release() {
 	req.postBody = nil
 	req.params = nil
 	req.requestID = ""
+	req.pathParams = []string{}
 }
 
 // RequestID get unique ID with current request

@@ -10,6 +10,9 @@ import (
 
 type HttpServer struct {
 	ServerMux *http.ServeMux
+	tplDir string
+	tplExtName string
+	tplsRender BaseRender
 }
 
 type ErrorHandler interface {
@@ -20,6 +23,13 @@ type pool struct {
 	request  *sync.Pool
 	response *sync.Pool
 	context  *sync.Pool
+}
+
+func newHttpServer() *HttpServer {
+	return &HttpServer{
+		ServerMux: http.NewServeMux(),
+		tplsRender: newRender(),
+	}
 }
 
 //全局的pool

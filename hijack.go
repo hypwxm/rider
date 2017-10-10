@@ -18,8 +18,8 @@ type HijackUp struct {
 //添加默认的响应头
 var defaultHijackHeader string = "HTTP/1.1 200 OK\r\n"
 
-//给客户端发送数据
-func (hj *HijackUp) Send(data []byte) (size int) {
+//设置响应头信息
+func (hj *HijackUp) setHeaders() {
 	var header string = defaultHijackHeader
 	for k, v := range hj.header {
 		//如果响应头是setcookie，要一行行分开写
@@ -33,6 +33,11 @@ func (hj *HijackUp) Send(data []byte) (size int) {
 		header += k + ": " + strings.Join(v, ";") + "\r\n"
 	}
 	hj.bufrw.WriteString(header + "\r\n")
+}
+
+//给客户端发送数据
+func (hj *HijackUp) Send(data []byte) (size int) {
+	hj.setHeaders()
 	size, err := hj.bufrw.Write(data)
 	if err == nil {
 		err = hj.bufrw.Flush()
@@ -120,3 +125,5 @@ func (hj *HijackUp) Redirect(code int, targetUrl string) {
 func (hj *HijackUp) SetContentType(contentType string) {
 	hj.SetHeader("Content-Type", contentType)
 }
+
+

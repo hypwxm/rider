@@ -26,7 +26,7 @@ func NewUploadFile(file multipart.File, header *multipart.FileHeader) *UploadFil
 		File:     file,
 		Header:   header,
 		fileName: header.Filename,
-		fileExt:  riderFile.GetFileExt(header.Filename),
+		fileExt:  riderFile.Ext(header.Filename),
 	}
 }
 

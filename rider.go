@@ -16,6 +16,8 @@ import (
 	"net/http"
 	"log"
 	"time"
+	"os"
+	"path/filepath"
 )
 
 const (
@@ -67,22 +69,35 @@ func SetEnvMode(mode string) {
 	}
 }
 
+func SetEnvProduction() {
+	SetEnvMode("production")
+}
+
+func SetEnvDevelopment() {
+	SetEnvMode("development")
+}
+
+func SetEnvDebug() {
+	SetEnvMode("debug")
+}
+
 
 //初始化服务入口组建
 func New() *rider {
-	server := &HttpServer{ServerMux: http.NewServeMux()}
+	server := newHttpServer()
 	return &rider{
 		server:  server,
-		routers: NewRootRouter(),
+		routers: newRootRouter(server),
 	}
 }
 
-func NewRootRouter() *Router {
+func newRootRouter(server *HttpServer) *Router {
 	_router := NewRouter()
 	_router.isRoot = true
 	_router.fullPath = "/"
 	_router.rootPath = "/"
 	_router.Method = "ANY"
+	_router.SetServer(server)
 	return _router
 }
 
@@ -113,7 +128,7 @@ func (r *rider) registerRiderRouter(method string, path string, router *Router) 
 	//将app的中间处理函数传给routers根路由(后面再由routers传给其各个子路由)
 	//r.routers.FrontMiddleware(r.Middleware...)
 	//将服务注入这个组建根路由，确保路由是创立在这个服务上
-	r.routers.SetServer(r.server)
+	//r.routers.SetServer(r.server)
 	//将服务注入这个组建子路由，确保路由是创立在这个服务上
 	router.SetServer(r.server)
 	//服务注册入口内部的入口
@@ -191,8 +206,50 @@ func (r *rider) AddMiddleware(handlers ...HandlerFunc) {
 	r.routers.Middleware = append(r.routers.Middleware, handlers...)
 }
 
-
 //重写错误处理
 func (r *rider) Error(errorHandle func(c *Context, err string, code int)) {
 	ErrorHandle = errorHandle
+}
+
+
+
+
+//设置模板路径（默认不缓存）
+func (r *rider) SetViews(tplDir string, extName string) {
+	r.GetServer().tplDir = tplDir
+	r.GetServer().tplExtName = extName
+	if tplsRender, ok := r.GetServer().tplsRender.(*render); ok {
+		tplsRender.setTplDir(tplDir)
+		tplsRender.setExtName(extName)
+	}
+}
+
+//设置模板缓存(默认不开启)
+func (r *rider) CacheViews() {
+	if tplsRender, ok := r.GetServer().tplsRender.(*render); ok {
+		tplsRender.Cache()
+		tplsRender.registerTpl(r.server.tplDir, r.server.tplExtName, "")
+	}
+}
+
+//设置模板接口 (实现BaseRender接口的Render方法)
+//须在SetViews方法之前调用
+func (r *rider) ViewEngine(render BaseRender) {
+	r.GetServer().tplsRender = render
+}
+
+//设置静态文件目录
+func (r *rider) SetStatic(staticPath string) {
+	f, err := os.Stat(staticPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !f.IsDir() {
+		log.Fatal("路径必须为目录")
+	}
+	r.GET("/assets/(.*)", &Router{
+		Handler: func (c *Context) {
+			c.SendFile(filepath.Join(staticPath, c.PathParams()[0]))
+		},
+	})
 }

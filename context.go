@@ -8,7 +8,12 @@ import (
 	"net/url"
 	"rider/riderServer"
 	"time"
-	"fmt"
+	"os"
+	"io"
+	"mime"
+	"path/filepath"
+	"io/ioutil"
+	"log"
 )
 
 type Contexter interface {
@@ -19,7 +24,7 @@ type Contexter interface {
 	getCurrentHandler() (HandlerFunc, error)                                       //获取当前处理中的中间件
 	startHandleList() error                                                        //开始处理中间件
 	release()                                                                      //释放Context
-	reset(w *Response, r *Request) *Context                                        //初始化Context
+	reset(w *Response, r *Request, server *HttpServer) *Context                                        //初始化Context
 	SetLocals(key string, value interface{})                                       //给context传递变量，该变量在整个请求的传递中一直有效
 	GetLocals(key string) interface{}                                              //通过SetLocals设置的值可以在下个中间件中获取
 	CancelResponse()                                                               //在响应未结束前，可以随时终止响应的处理
@@ -46,6 +51,8 @@ type Contexter interface {
 	Cookies() []*http.Cookie                                                       //获取请求的cookies
 	CookieValue(key string) (string, error)                                        //获取请求体中某一字段的cookie值
 
+	SendFile(path string)
+	PathParams() []string  //通过正则匹配后得到的路径上的一些参数
 	End() //调用该方法表示响应已经结束
 
 	//Response
@@ -54,6 +61,11 @@ type Contexter interface {
 	SendHeaderValue(key string) string //获取响应头的某一字段值
 	SendCookie(cookie http.Cookie)     //设置响应的cookie
 	RemoveCookie(cookieName string)    //删除cookie
+
+
+	//模板
+	Render(tplName string, data interface{})  //负责模板渲染
+	Download(fileName string, name string) error //下载，fileName为完整路径,name为下载时指定的下载名称，传""使用文件本身名称
 }
 
 type Responser interface {
@@ -89,6 +101,7 @@ type Context struct {
 	isReadyWriteTimeout bool //通知作用，通知该处理即将进入超时状态并处理超时逻辑
 	isEnd               bool
 	done                chan int
+	server *HttpServer
 	ended chan int
 }
 
@@ -100,7 +113,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 	}
 }
 
-func (c *Context) reset(w *Response, r *Request) *Context {
+func (c *Context) reset(w *Response, r *Request, server *HttpServer) *Context {
 	c.request = r
 	c.response = w
 	c.handlerList = list.New()
@@ -111,6 +124,7 @@ func (c *Context) reset(w *Response, r *Request) *Context {
 	c.isReadyWriteTimeout = false
 	c.done = make(chan int)
 	c.ended = make(chan int, 1)
+	c.server = server
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
 	go c.timeout()
 	return c
@@ -155,16 +169,18 @@ func (c *Context) Next(err ...error) error {
 		//未知错误
 		return errors.New("unknown error of nil handler")
 	}
+
+	if len(err) > 0 && err[0] != nil {
+		HttpError(c, err[0].Error(), http.StatusInternalServerError)
+		return nil
+	}
+
 	next := c.currentHandler.Next()
 	if next == nil {
 		//处理器已处理完毕，或者一些位置错误
 		return errors.New("all handler was done")
 	}
 
-	if len(err) > 0 && err[0] != nil {
-		HttpError(c, err[0].Error(), http.StatusInternalServerError)
-		return nil
-	}
 
 	//先设置current
 	c.setCurrent(next)
@@ -268,6 +284,11 @@ func (c *Context) Params() map[string]string {
 //获取path匹配的参数/:id/:xx
 func (c *Context) Param(key string) string {
 	return c.request.Param(key)
+}
+
+//获取正则匹配路径后的一些参数
+func (c *Context) PathParams() []string {
+	return c.request.pathParams
 }
 
 //获取requestID
@@ -476,4 +497,75 @@ func (c *Context) Hijack() (*HijackUp, error) {
 	c.isHijack = true
 	c.hijacker = &HijackUp{conn: conn, bufrw: bufrw, header: originHeader}
 	return c.hijacker, nil
+}
+
+
+
+
+
+//模板渲染
+func (c *Context) Render(tplName string, data interface{}) {
+	var err error
+	if c.isHijack {
+		c.hijacker.setHeaders()
+		err = c.server.tplsRender.Render(c.hijacker.bufrw, tplName, data)
+		err := c.hijacker.bufrw.Flush()
+		if err != nil {
+			HttpError(c, err.Error(), 500)
+			return
+		}
+		c.hijacker.Close()
+	} else {
+		err = c.server.tplsRender.Render(c.response.writer, tplName, data)
+	}
+	if err != nil {
+		HttpError(c, err.Error(), 404)
+		return
+	}
+	c.End()
+}
+
+//文件服务器
+func (c *Context) SendFile(path string) {
+	//获取文件的mimetype，让客户端以正确的方式读取文件
+	mediaType := mime.TypeByExtension(filepath.Ext(path))
+	c.SetContentType(mediaType)
+	f, err := os.Stat(path)
+	if err != nil || f.IsDir() {
+		HttpError(c, err.Error(), 404)
+		return
+	}
+	fp, err := os.Open(path)
+	if err != nil {
+		HttpError(c, err.Error(), 404)
+		return
+	}
+	if c.isHijack {
+		io.Copy(c.hijacker.bufrw, fp)
+	} else {
+		io.Copy(c.response.writer, fp)
+	}
+	c.End()
+}
+
+
+//文件下载
+func (c *Context) Download(fileName string, name string) error {
+	f, err := os.Stat(fileName)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if f.IsDir() {
+		return errors.New("发送文件夹，请先压缩")
+	}
+
+	if name == "" {
+		name = filepath.Base(fileName)
+	}
+	c.SetContentType("application/octet-stream")
+	c.SetHeader("Content-Disposition", "attachment;filename="+name)
+	file, err := ioutil.ReadFile(fileName)
+	c.Send(file)
+	return nil
 }

@@ -10,7 +10,6 @@ import (
 	"runtime/debug"
 	"log"
 	"time"
-	"fmt"
 )
 
 
@@ -65,7 +64,7 @@ func (r *Response) SetHeader(key, val string) {
 }
 
 func (r *Response) SetContentType(contenttype string) {
-	r.SetHeader("Content-Type", contenttype)
+	r.SetHeader("Content-Type", contenttype + "; charset=utf-8")
 }
 
 // SetStatusCode sends an HTTP response header with status code. If WriteHeader is
@@ -97,7 +96,6 @@ func (r *Response) Send(data []byte) (size int) {
 	}
 
 	r.End()
-	fmt.Println(data)
 	r.writer.Write(data)
 	return len(data)
 }
@@ -166,6 +164,7 @@ func (r *Response) SetCookie(cookie http.Cookie) {
 
 //设置一些基本的响应头信息
 func setBaseResHeader(header http.Header) {
+	header.Set("Content-Type", "text/html;charset=utf-8")
 	header.Set("Server", "rider")
 	header.Set("X-DNS-Prefetch-Control", "off")
 	header.Set("X-Download-Options", "noopen")
