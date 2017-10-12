@@ -14,10 +14,10 @@ package rider
 
 import (
 	"net/http"
-	"log"
 	"time"
 	"os"
 	"path/filepath"
+	"rider/logger"
 )
 
 const (
@@ -114,10 +114,11 @@ func (r *rider) Listen(port string) {
 		WriteTimeout:   0,
 		MaxHeaderBytes: maxHeaderBytes,
 	}
+
 	err := server.ListenAndServe()
 	//err := http.ListenAndServe(port, r.server.ServerMux)
 	if err != nil {
-		log.Fatalln("[error] ", err)
+		r.server.logger.FATAL(err.Error())
 	}
 }
 
@@ -242,14 +243,24 @@ func (r *rider) ViewEngine(render BaseRender) {
 func (r *rider) SetStatic(staticPath string) {
 	f, err := os.Stat(staticPath)
 	if err != nil {
-		log.Fatal(err)
+		r.server.logger.FATAL(err.Error())
+		return
 	}
 	if !f.IsDir() {
-		log.Fatal("路径必须为目录")
+		r.server.logger.FATAL(staticPath + "不是路径，静态文件路径必须为目录")
+		return
 	}
 	r.GET("/assets/(.*)", &Router{
 		Handler: func (c *Context) {
 			c.SendFile(filepath.Join(staticPath, c.PathParams()[0]))
 		},
 	})
+}
+
+
+//引入日志模块
+func (r *rider) Logger(level int) *logger.LogQueue {
+	r.server.logger = logger.NewLogger()
+	r.server.logger.SetLevel(level)
+	return r.server.logger
 }

@@ -8,7 +8,8 @@ import (
 
 func main() {
 	app := rider.New()
+	app.Logger(8)
 	wd, _ := os.Getwd()
 	app.SetStatic(filepath.Join(wd, "src/rider/example/setStatic/public"))
-	app.Listen(":5000")
+	app.Listen(":5001")
 }

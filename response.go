@@ -5,10 +5,7 @@ import (
 	"net"
 	"bufio"
 	"io"
-	"errors"
 	"encoding/json"
-	"runtime/debug"
-	"log"
 	"time"
 )
 
@@ -23,6 +20,7 @@ type (
 		header    http.Header
 		isEnd     bool
 		isHijack  bool
+		server *HttpServer
 	}
 
 	gzipResponseWriter struct {
@@ -31,8 +29,9 @@ type (
 	}
 )
 
-func NewResponse(w http.ResponseWriter) (r *Response) {
-	return (&Response{}).reset(w)
+func NewResponse(w http.ResponseWriter, server *HttpServer) (r *Response) {
+	response := basePool.response.Get().(*Response)
+	return response.reset(w, server)
 }
 
 func (r *Response) Header() http.Header {
@@ -74,15 +73,20 @@ func (r *Response) SetContentType(contenttype string) {
 func (r *Response) SetStatusCode(code int) {
 	if r.committed {
 		if r.isEnd {
-			log.Panic(errors.New("response already sended, please do not set status anymore"), "\n", string(debug.Stack()))
+			r.server.logger.PANIC("can not send response status after sending a response")
 		} else {
-			log.Panic(errors.New("response already set status"), "\n", string(debug.Stack()))
-			panic("system error occurred")
+			r.server.logger.PANIC("can not set the status code again")
 		}
+		return
 	}
 	r.Status = code
 	r.writer.WriteHeader(code)
 	r.committed = true
+}
+
+//获取状态码
+func (r *Response) GetStatusCode() int {
+	return r.Status
 }
 
 //给client发送消息，json，text，html，xml...(不发送模板,模板请用render)
@@ -92,7 +96,8 @@ func (r *Response) Send(data []byte) (size int) {
 	}
 
 	if r.isEnd {
-		log.Panic(errors.New("sent again after res was sent"), "\n", string(debug.Stack()))
+		r.server.logger.PANIC("sent again after res was sent")
+		return
 	}
 
 	r.End()
@@ -106,7 +111,7 @@ func (r *Response) SendJson(data interface{}) (size int) {
 	if err != nil {
 		panic(err)
 	}
-	r.SetContentType("application/json;charset=utf-8")
+	r.SetContentType("application/json")
 	r.Send(jsonData)
 	return len(jsonData)
 }
@@ -131,7 +136,7 @@ func (r *Response) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 //reset response attr
-func (r *Response) reset(w http.ResponseWriter) *Response {
+func (r *Response) reset(w http.ResponseWriter, server *HttpServer) *Response {
 	r.writer = w
 	r.header = w.Header()
 	r.Status = http.StatusOK
@@ -139,6 +144,7 @@ func (r *Response) reset(w http.ResponseWriter) *Response {
 	r.committed = false
 	r.isEnd = false
 	r.body = []byte{}
+	r.server = server
 	setBaseResHeader(r.Header())
 	return r
 }
@@ -171,5 +177,6 @@ func setBaseResHeader(header http.Header) {
 	header.Set("X-Frame-Options", "SAMEORIGIN")
 	header.Set("X-Content-Type-Options", "nosniff")
 	header.Set("Connection", "keep-alive")
+	header.Set("X-XSS-Protection", "1; mode=block")
 	header.Set("Date", time.Now().Format(time.RFC822))
 }

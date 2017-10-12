@@ -13,7 +13,6 @@ import (
 	"mime"
 	"path/filepath"
 	"io/ioutil"
-	"log"
 )
 
 type Contexter interface {
@@ -24,7 +23,7 @@ type Contexter interface {
 	getCurrentHandler() (HandlerFunc, error)                                       //获取当前处理中的中间件
 	startHandleList() error                                                        //开始处理中间件
 	release()                                                                      //释放Context
-	reset(w *Response, r *Request, server *HttpServer) *Context                                        //初始化Context
+	reset(w *Response, r *Request, server *HttpServer) *Context                    //初始化Context
 	SetLocals(key string, value interface{})                                       //给context传递变量，该变量在整个请求的传递中一直有效
 	GetLocals(key string) interface{}                                              //通过SetLocals设置的值可以在下个中间件中获取
 	CancelResponse()                                                               //在响应未结束前，可以随时终止响应的处理
@@ -52,8 +51,8 @@ type Contexter interface {
 	CookieValue(key string) (string, error)                                        //获取请求体中某一字段的cookie值
 
 	SendFile(path string)
-	PathParams() []string  //通过正则匹配后得到的路径上的一些参数
-	End() //调用该方法表示响应已经结束
+	PathParams() []string //通过正则匹配后得到的路径上的一些参数
+	End()                 //调用该方法表示响应已经结束
 
 	//Response
 	//Responser
@@ -62,10 +61,9 @@ type Contexter interface {
 	SendCookie(cookie http.Cookie)     //设置响应的cookie
 	RemoveCookie(cookieName string)    //删除cookie
 
-
 	//模板
-	Render(tplName string, data interface{})  //负责模板渲染
-	Download(fileName string, name string) error //下载，fileName为完整路径,name为下载时指定的下载名称，传""使用文件本身名称
+	Render(tplName string, data interface{}) //负责模板渲染
+	Download(fileName string, name string)   //下载，fileName为完整路径,name为下载时指定的下载名称，传""使用文件本身名称
 }
 
 type Responser interface {
@@ -73,6 +71,7 @@ type Responser interface {
 	AddHeader(key, value string)          //给响应头添加值
 	SetContentType(contentType string)    //给响应头设置contenttype
 	SetStatusCode(code int)               //设置响应头的状态码
+	GetStatusCode() int                   //获取响应状态码
 	Header() http.Header                  //返回响应头信息
 	HeaderValue(key string) string        //返回某一字段的响应头信息
 	Redirect(code int, targetUrl string)  //重定向
@@ -101,17 +100,28 @@ type Context struct {
 	isReadyWriteTimeout bool //通知作用，通知该处理即将进入超时状态并处理超时逻辑
 	isEnd               bool
 	done                chan int
-	server *HttpServer
-	ended chan int
+	server              *HttpServer
+	ended               chan int
+	endedStatus bool  //表示状态码是否已经发送（writeHeader有无调用）
 }
 
-func NewContext(w http.ResponseWriter, r *http.Request) *Context {
-	return &Context{
-		request:     NewRequest(r),
-		response:    NewResponse(w),
-		handlerList: list.New(),
-	}
+func newContext(w http.ResponseWriter, r *http.Request, server *HttpServer) *Context {
+	context := basePool.context.Get().(*Context)
+	request := NewRequest(r)
+	response := NewResponse(w, server)
+	context.reset(response, request, server)
+	return context
 }
+
+func releaseContext(c *Context) {
+	c.response.release()
+	basePool.response.Put(c.response)
+	c.request.release()
+	basePool.request.Put(c.request)
+	c.release()
+	basePool.context.Put(c)
+}
+
 
 func (c *Context) reset(w *Response, r *Request, server *HttpServer) *Context {
 	c.request = r
@@ -125,6 +135,7 @@ func (c *Context) reset(w *Response, r *Request, server *HttpServer) *Context {
 	c.done = make(chan int)
 	c.ended = make(chan int, 1)
 	c.server = server
+	c.endedStatus = false
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
 	go c.timeout()
 	return c
@@ -145,6 +156,7 @@ func (c *Context) release() {
 	c.done = nil
 	c.ended = nil
 	c.hijacker = nil
+	c.endedStatus = false
 }
 
 //请求超时
@@ -180,7 +192,6 @@ func (c *Context) Next(err ...error) error {
 		//处理器已处理完毕，或者一些位置错误
 		return errors.New("all handler was done")
 	}
-
 
 	//先设置current
 	c.setCurrent(next)
@@ -375,11 +386,29 @@ func (c *Context) SetContentType(contentType string) {
 
 //设置响应的状态码
 func (c *Context) SetStatusCode(code int) {
+	if c.endedStatus {
+		if c.isEnd {
+			c.server.logger.PANIC("can not send response status after sending a response")
+		} else {
+			c.server.logger.PANIC("can not set the status code again")
+		}
+		return
+	}
 	if c.isHijack {
 		c.hijacker.SetStatusCode(code)
 	} else {
 		c.response.SetStatusCode(code)
 	}
+	//endedStatus响应状态码已设置
+	c.endedStatus = true
+}
+
+//获取响应状态码
+func (c *Context) GetStatusCode() int {
+	if c.isHijack {
+		return c.hijacker.GetStatusCode()
+	}
+	return c.response.GetStatusCode()
 }
 
 //获取响应头信息
@@ -467,6 +496,8 @@ func (c *Context) Redirect(code int, targetUrl string) {
 //通知响应结束
 func (c *Context) End() {
 	if c.isEnd {
+		c.server.logger.PANIC("can not send a response again")
+		//log.Panicln()
 		return
 	}
 	c.isEnd = true
@@ -499,17 +530,13 @@ func (c *Context) Hijack() (*HijackUp, error) {
 	return c.hijacker, nil
 }
 
-
-
-
-
 //模板渲染
 func (c *Context) Render(tplName string, data interface{}) {
 	var err error
 	if c.isHijack {
 		c.hijacker.setHeaders()
 		err = c.server.tplsRender.Render(c.hijacker.bufrw, tplName, data)
-		err := c.hijacker.bufrw.Flush()
+		err = c.hijacker.bufrw.Flush()
 		if err != nil {
 			HttpError(c, err.Error(), 500)
 			return
@@ -548,16 +575,16 @@ func (c *Context) SendFile(path string) {
 	c.End()
 }
 
-
 //文件下载
-func (c *Context) Download(fileName string, name string) error {
+func (c *Context) Download(fileName string, name string) {
 	f, err := os.Stat(fileName)
 	if err != nil {
-		log.Println(err)
-		return err
+		c.server.logger.ERROR(err)
+		return
 	}
 	if f.IsDir() {
-		return errors.New("发送文件夹，请先压缩")
+		c.server.logger.ERROR("发送文件夹，请先压缩")
+		return
 	}
 
 	if name == "" {
@@ -567,5 +594,4 @@ func (c *Context) Download(fileName string, name string) error {
 	c.SetHeader("Content-Disposition", "attachment;filename="+name)
 	file, err := ioutil.ReadFile(fileName)
 	c.Send(file)
-	return nil
 }

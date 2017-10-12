@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"sync"
 	"path/filepath"
-	"log"
 	"strings"
 	"container/list"
 	"runtime/debug"
 	"regexp"
+	"rider/logger"
+	"time"
 )
 
 //跟路由和子路由需要实现的方法
@@ -106,6 +107,10 @@ func NewRouter() *Router {
 
 //判断注册的路由里面和请求的路由是否匹配，包括路由参数匹配
 func (r *Router) getByPath(path string, request *Request) handlerRouter {
+	if strings.LastIndex(path, "/") == len(path) - 1 {
+		//path == "/a/b/c/" 去除最后的"/"在进行比较
+		path = path[:len(path) - 1]
+	}
 	walk:
 	for k, v := range r.subRouter {
 		if path == k {
@@ -176,39 +181,39 @@ func (r *Router) getByPath(path string, request *Request) handlerRouter {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	response := basePool.response.Get().(*Response)
-	request := basePool.request.Get().(*Request)
-	context := basePool.context.Get().(*Context)
-	response = response.reset(w)
-	request = request.reset(req)
-	context = context.reset(response, request, r.GetServer())
-
+	routerStart := time.Now()
+	context := newContext(w, req, r.GetServer())
 	defer func() {
 		if err, ok := recover().(error); ok {
-			log.Println(err.Error())
-			log.Println(string(debug.Stack()))
+			r.server.logger.ERROR(err.Error())
+			r.server.logger.PANIC(string(debug.Stack()))
 			if context.isWriteTimeout {
 				//超时的话会给客户端响应超时信息，无需发送响应
 				return
 			}
+			routerEnd := time.Now()
+			routerDuration := routerEnd.Sub(routerStart)
+			logger.HttpLogger(r.GetServer().logger, context.Method(), context.Path(), context.GetStatusCode(), routerDuration, context.RequestID())
 			HttpError(context, err.Error(), http.StatusInternalServerError)
+			releaseContext(context)
 		}
 	}()
 
-	if handler := r.getByPath(req.URL.Path, request); handler != nil {
+	if handler := r.getByPath(req.URL.Path, context.request); handler != nil {
 		handler.riderServeHTTP(context)
 	} else {
-		HttpError(context, "不合法请求路径", 404)
+		HttpError(context, "does not match the request path", 404)
 	}
 
 	//只有通知结束了，才能结束，客户端在为接收到响应前处于挂起状态。
 	<- context.ended
-	response.release()
-	basePool.response.Put(response)
-	request.release()
-	basePool.request.Put(request)
-	context.release()
-	basePool.context.Put(context)
+
+	//记录http请求耗时
+	routerEnd := time.Now()
+	routerDuration := routerEnd.Sub(routerStart)
+	logger.HttpLogger(r.GetServer().logger, context.Method(), context.Path(), context.GetStatusCode(), routerDuration, context.RequestID())
+	//
+	releaseContext(context)
 }
 
 func (h handlerRouter) riderServeHTTP(context *Context) {
@@ -434,7 +439,7 @@ func registerHandler(r *Router, pattern string, router *Router) {
 	r.registerRouter(method, pattern, router)
 
 	if len(router.Middleware) == 0 && router.Handler == nil {
-		log.Println("未被使用的路由：", pattern)
+		r.server.logger.WARNING("未被使用的路由：", pattern)
 	}
 }
 

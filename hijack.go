@@ -13,6 +13,7 @@ type HijackUp struct {
 	conn net.Conn
 	bufrw *bufio.ReadWriter
 	header http.Header   //header引用了转换成hijack之前的response的header，
+	statusCode int
 }
 
 //添加默认的响应头
@@ -51,7 +52,7 @@ func (hj *HijackUp) Send(data []byte) (size int) {
 
 //发送json格式的数据给客户端
 func (hj *HijackUp) SendJson(data interface{}) (size int) {
-	hj.SetHeader("Content-Type", "application/json;charset=utf-8")
+	hj.SetContentType("application/json")
 	dataJson, err := json.Marshal(data)
 	if err != nil {
 		panic(err)
@@ -102,7 +103,13 @@ func (hj *HijackUp) Close() {
 
 //设置响应头状态码
 func (hj *HijackUp) SetStatusCode(code int) {
+	hj.statusCode = code
 	defaultHijackHeader = "HTTP/1.1 " + strconv.Itoa(code) + " " + http.StatusText(code) + "\r\n"
+}
+
+//获取响应状态码
+func (hj *HijackUp) GetStatusCode() int {
+	return hj.statusCode
 }
 
 //设置cookie
@@ -123,7 +130,7 @@ func (hj *HijackUp) Redirect(code int, targetUrl string) {
 
 //设置contenttype
 func (hj *HijackUp) SetContentType(contentType string) {
-	hj.SetHeader("Content-Type", contentType)
+	hj.SetHeader("Content-Type", contentType + ";charset=utf-8")
 }
 
 

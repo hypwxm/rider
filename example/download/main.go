@@ -9,6 +9,7 @@ import (
 
 func main() {
 	app := rider.New()
+	app.Logger(8)
 	wd, _ := os.Getwd()
 	app.GET("/download", &rider.Router{
 		Handler: func(c *rider.Context) {
@@ -17,5 +18,5 @@ func main() {
 			c.Download(filepath.Join(wd, "src/rider/example/download", file.Name()), "")
 		},
 	})
-	app.Listen(":5008")
+	app.Listen(":5000")
 }

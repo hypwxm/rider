@@ -1,6 +1,11 @@
 package riderFile
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+	"log"
+	"strings"
+)
 
 //get filename extensions
 func Ext(path string) string {
@@ -29,4 +34,13 @@ func IsDir(path string) bool {
 		return fi.IsDir()
 	}
 	return false
+}
+
+//获取当前目录
+func GetCWD() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return strings.Replace(dir, "\\", "/", -1)
 }

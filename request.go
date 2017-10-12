@@ -49,7 +49,8 @@ type Request struct {
 }
 
 func NewRequest(r *http.Request) *Request {
-	return (&Request{}).reset(r)
+	request := basePool.request.Get().(*Request)
+	return request.reset(r)
 }
 
 //reset response attr

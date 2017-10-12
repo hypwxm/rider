@@ -4,8 +4,7 @@ import (
 	"net/http"
 	"sync"
 	"runtime/debug"
-	"log"
-	"errors"
+	"rider/logger"
 )
 
 type HttpServer struct {
@@ -13,6 +12,7 @@ type HttpServer struct {
 	tplDir string
 	tplExtName string
 	tplsRender BaseRender
+	logger *logger.LogQueue
 }
 
 type ErrorHandler interface {
@@ -59,15 +59,23 @@ var ErrorHandle func(c *Context, err string, code int)
 
 func HttpError(c *Context, err string, code int) {
 	if c.isEnd {
-		log.Panic(errors.New("response sent again"))
+		c.server.logger.PANIC("can not send a response again")
+		return
 	}
 	//c.End()
 
 	//错误处理函数会将responsewriter转化为hijack；为了能够立即将响应返回给客户端
 	//如果不转成hijack，将会导致错误处理会一直等待主程序其他的处理完成，但是其他处理完成的时候已经release所有变量，导致send时找不到对应的writer
-	hijacker, errh := c.Hijack()
+	var hijacker *HijackUp
+	var errh error
+	if c.isHijack {
+		hijacker = c.hijacker
+	} else {
+		hijacker, errh = c.Hijack()
+	}
+
 	if errh != nil {
-		log.Println(errh, "\n", string(debug.Stack()))
+		c.server.logger.PANIC(errh, "\r\n", string(debug.Stack()))
 		return
 	}
 	hijacker.SetStatusCode(code)
@@ -90,8 +98,7 @@ func init() {
 			errMsg.Stack = string(debug.Stack())
 		}
 		if GlobalENV == ENV_Debug {
-			log.Println(err)
-			log.Println(string(debug.Stack()))
+			c.server.logger.DEBUG(err, "\r\n", string(debug.Stack()))
 			errMsg.Stack = string(debug.Stack())
 		}
 		c.SendJson(errMsg)
