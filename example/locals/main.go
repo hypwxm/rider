@@ -7,6 +7,7 @@ import (
 
 func main() {
 	app := rider.New()
+	app.Logger(8)
 	app.AddMiddleware(
 		func(c *rider.Context) {
 			c.SetLocals("locals", "this is the first locals")
@@ -15,5 +16,5 @@ func main() {
 		},
 	)
 	app.GET("/", router.Router())
-	app.Listen(":5000")
+	app.Listen(":5003")
 }

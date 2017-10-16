@@ -2,18 +2,37 @@ package main
 
 import (
 	"rider"
+	"fmt"
+	"rider/smtp/FlyWhisper"
 )
 
 func main() {
 	app := rider.New()
 	rlog := app.Logger(8)
+	//wd, _ := os.Getwd()
+	rlog.SetLogOutPath("")
+	rlog.SmtpLogger(
+		"postmaster@seemrice.com",
+		"Hyp2Wxm2Hxy",
+		"smtp.mxhichina.com",
+		"25",
+		"postmaster@seemrice.com",
+	)
+	//rlog.SetDestination(1)
+	//rlog.AddDestination(0)
+	fmt.Println(rlog.GetDestination())
+	rlog.SetLogFileMaxSize(20 << 20)
 	app.GET("/logger", &rider.Router{
 		Handler: func(c *rider.Context) {
+			c.SetHeader("ACCESS-CONTROL-ALLOW-ORIGIN", "*")
 			rlog.INFO("xx", "yy")
 			rlog.DEBUG("OK")
-			rlog.PANIC("adad")
+			//rlog.PANIC("adad")
+			mess := FlyWhisper.NewMessage("logger send", []string{"1825909531@qq.com"})
+			mess.AddHtml("<p>this is a mail logger</p>")
+			c.Logger.SendMail(mess)
 			c.SendJson(map[string]string{
-				"a":"1",
+				"a": "1",
 			})
 		},
 	})
@@ -37,6 +56,3 @@ func main() {
 	app.Listen(":5000")
 
 }
-
-
-

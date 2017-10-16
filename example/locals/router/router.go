@@ -18,6 +18,7 @@ func Router() *rider.Router {
 		Handler: func (c *rider.Context) {
 			fmt.Println(c.GetLocals("locals"))
 			fmt.Println(c.GetLocals("locals2"))
+
 			c.Send([]byte("ok2"))
 		},
 	})

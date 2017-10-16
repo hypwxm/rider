@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"log"
 	"strings"
+	"runtime"
+	"errors"
 )
 
 //get filename extensions
@@ -36,11 +38,20 @@ func IsDir(path string) bool {
 	return false
 }
 
-//获取当前目录
+//获取当前工作目录
 func GetCWD() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatalln(err)
 	}
 	return strings.Replace(dir, "\\", "/", -1)
+}
+
+//获取当前文件所在目录
+func GetDirName() (string, error) {
+	_, file, _, ok := runtime.Caller(2)
+	if !ok {
+		return "", errors.New("can not get __dirname")
+	}
+	return filepath.Dir(file), nil
 }

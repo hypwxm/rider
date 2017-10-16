@@ -75,7 +75,7 @@ func HttpError(c *Context, err string, code int) {
 	}
 
 	if errh != nil {
-		c.server.logger.PANIC(errh, "\r\n", string(debug.Stack()))
+		c.server.logger.PANIC(errh)
 		return
 	}
 	hijacker.SetStatusCode(code)

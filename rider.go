@@ -23,7 +23,7 @@ import (
 const (
 	addr           = ":8000"
 	readTimeout    = 30 * time.Second
-	writerTimeout  = 5 * time.Second
+	writerTimeout  = 60 * time.Second
 	maxHeaderBytes = 1 << 20 //1MB
 	defaultMultipartBodySze = 32 << 20
 	ENV_Production = "production"

@@ -107,7 +107,7 @@ func NewRouter() *Router {
 
 //判断注册的路由里面和请求的路由是否匹配，包括路由参数匹配
 func (r *Router) getByPath(path string, request *Request) handlerRouter {
-	if strings.LastIndex(path, "/") == len(path) - 1 {
+	if filepath.Clean(path) != "/" && strings.LastIndex(path, "/") == len(path) - 1 {
 		//path == "/a/b/c/" 去除最后的"/"在进行比较
 		path = path[:len(path) - 1]
 	}

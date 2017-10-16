@@ -2,6 +2,9 @@ package rider
 
 import "net/http"
 
-var (
+const (
 	MethodGet = http.MethodGet
 )
+
+
+

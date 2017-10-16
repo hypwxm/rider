@@ -1,0 +1,2 @@
+[HTTP]  GET / 404 246.569µs => [ 037cbed3a29511e8600f40d87b166d20 ]
+[HTTP]  GET /newView 404 165.277µs => [ 9c28b0eed43556542aee38bfa84be5b8 ]

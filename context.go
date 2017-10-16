@@ -13,6 +13,7 @@ import (
 	"mime"
 	"path/filepath"
 	"io/ioutil"
+	"rider/logger"
 )
 
 type Contexter interface {
@@ -87,33 +88,41 @@ var (
 	_ Responser = &HijackUp{}
 )
 
+// "##"表示从pool取得context时必须初始化的值
 type Context struct {
-	request             *Request
-	response            *Response
-	handlerList         *list.List
-	currentHandler      *list.Element
-	ctx                 ctxt.Context //标准包的context
-	cancel              ctxt.CancelFunc
-	isHijack            bool
-	hijacker            *HijackUp
-	isWriteTimeout      bool
-	isReadyWriteTimeout bool //通知作用，通知该处理即将进入超时状态并处理超时逻辑
-	isEnd               bool
-	done                chan int
-	server              *HttpServer
-	ended               chan int
-	endedStatus bool  //表示状态码是否已经发送（writeHeader有无调用）
+	request             *Request   //##
+	response            *Response    //##
+	handlerList         *list.List   //##
+	currentHandler      *list.Element   //##
+	ctx                 ctxt.Context //##标准包的context
+	cancel              ctxt.CancelFunc  //##
+	isHijack            bool    //##
+	hijacker            *HijackUp    //##
+	isWriteTimeout      bool   //##
+	isReadyWriteTimeout bool //##通知作用，通知该处理即将进入超时状态并处理超时逻辑
+	isEnd               bool  //##
+	done                chan int   //##
+	server              *HttpServer   //整个服务引用的server都是同一个
+	ended               chan int   //##
+	endedStatus bool  //##表示状态码是否已经发送（writeHeader有无调用）
+	Logger *logger.LogQueue
+	Jwt *riderJwter  //用于存储jwt
 }
 
 func newContext(w http.ResponseWriter, r *http.Request, server *HttpServer) *Context {
+	//从pool取得context
 	context := basePool.context.Get().(*Context)
+	//从pool取得requset（注意初始化）
 	request := NewRequest(r)
+	//从pool取得response（注意初始化）
 	response := NewResponse(w, server)
+	//（初始化context）
 	context.reset(response, request, server)
 	return context
 }
 
 func releaseContext(c *Context) {
+	//响应结束，释放request，response，context回poo，方便其他请求取得（释放时记得参数初始化）
 	c.response.release()
 	basePool.response.Put(c.response)
 	c.request.release()
@@ -126,16 +135,20 @@ func releaseContext(c *Context) {
 func (c *Context) reset(w *Response, r *Request, server *HttpServer) *Context {
 	c.request = r
 	c.response = w
+	c.currentHandler = nil
 	c.handlerList = list.New()
+	c.ctx = ctxt.Background()
 	c.isHijack = false
-	c.isWriteTimeout = false
 	c.hijacker = nil
-	c.isEnd = false
+	c.isWriteTimeout = false
 	c.isReadyWriteTimeout = false
+	c.isEnd = false
 	c.done = make(chan int)
 	c.ended = make(chan int, 1)
 	c.server = server
 	c.endedStatus = false
+	c.Logger = server.logger
+	c.Jwt = nil
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
 	go c.timeout()
 	return c
@@ -156,6 +169,8 @@ func (c *Context) release() {
 	c.done = nil
 	c.ended = nil
 	c.hijacker = nil
+	c.Logger = nil
+	c.Jwt = nil
 	c.endedStatus = false
 }
 
@@ -583,13 +598,13 @@ func (c *Context) Download(fileName string, name string) {
 		return
 	}
 	if f.IsDir() {
-		c.server.logger.ERROR("发送文件夹，请先压缩")
+		c.server.logger.ERROR(fileName, "is a folder, compress the folder and send it again")
 		return
 	}
-
 	if name == "" {
 		name = filepath.Base(fileName)
 	}
+	//下载的文件名为传入的文件名（不为空）；或者默认的文件名
 	c.SetContentType("application/octet-stream")
 	c.SetHeader("Content-Disposition", "attachment;filename="+name)
 	file, err := ioutil.ReadFile(fileName)

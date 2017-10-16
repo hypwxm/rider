@@ -3,11 +3,14 @@ package logger
 import (
 	"time"
 	"strconv"
+	"strings"
 )
 
-func HttpLogger(lq *LogQueue, method string, path string, statusCode int, duration time.Duration, exMess ...string)  {
+func HttpLogger(lq *LogQueue, method string, path string, statusCode int, duration time.Duration, exMess ...string) {
 	var codeColor string
 	codeStr := strconv.Itoa(statusCode)
+	lc := NewLogCon("[HTTP] ", method, path, codeStr, duration, "=>", exMess)
+
 	switch {
 	case statusCode >= 500:
 		codeColor = RedBg(YellowText(codeStr))
@@ -20,5 +23,10 @@ func HttpLogger(lq *LogQueue, method string, path string, statusCode int, durati
 	case statusCode >= 100:
 		codeColor = WhiteAntiWhiteText(codeStr)
 	}
-	lq.Console(GreenText("[HTTP] "), WhiteText(method), WhiteText(path), codeColor, WhiteText(duration), GreenText("=>"), BlueText(exMess))
+	lc.ColorMessageStr = strings.Join([]string{GreenText("[HTTP] "), WhiteText(method), WhiteText(path), codeColor, WhiteText(duration), GreenText("=>"), BlueText(exMess)}, " ")
+	messArr := []string{"[HTTP] ", method, path, codeStr, duration.String(), "=>", "["}
+	messArr = append(messArr, exMess...)
+	messArr = append(messArr, "]")
+	lc.MessageStr = strings.Join(messArr, " ")
+	lq.Console(lc)
 }
