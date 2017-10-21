@@ -8,7 +8,7 @@ import (
 func main() {
 	//目前不支持params和pathParams混写
 	app := rider.New()
-	app.GET("/:id/id2", &rider.Router{
+	app.GET("/:id/id2/:id3", &rider.Router{
 		Handler: func(c *rider.Context) {
 			fmt.Println(c.Params())
 			fmt.Println(c.Param("id"))

@@ -48,8 +48,8 @@ func GetCWD() string {
 }
 
 //获取当前文件所在目录
-func GetDirName() (string, error) {
-	_, file, _, ok := runtime.Caller(2)
+func GetDirName(skip int) (string, error) {
+	_, file, _, ok := runtime.Caller(skip)
 	if !ok {
 		return "", errors.New("can not get __dirname")
 	}

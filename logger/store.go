@@ -57,7 +57,7 @@ func createErrLogFile(filename string) (*os.File, error) {
 //日志文件创建失败，会将日志转移至os.Stdout
 func (lq *LogQueue) SetLogOutPath(filename string) error {
 	if strings.TrimSpace(filename) == "" {
-		filename, _ = riderFile.GetDirName()
+		filename, _ = riderFile.GetDirName(2)
 	}
 	//判断filename是否存在，并且不为文件夹
 	if riderFile.IsExist(filename) && !riderFile.IsDir(filename) {

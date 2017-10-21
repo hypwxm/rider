@@ -75,7 +75,7 @@ func (m *Message) AddInline(filename string) error {
 		Filename: filename,
 	}
 	inline.contentType = mime.TypeByExtension(filepath.Ext(filename))
-	inline.contentId = cryptos.GetRandString(10)
+	inline.contentId = cryptos.RandString()
 	m.inlineImgs = append(m.inlineImgs, inline)
 	return nil
 }
@@ -101,7 +101,7 @@ func (m *Message) AddAttach(filename string) error {
 		Filename: filename,
 	}
 	attach.contentType = mime.TypeByExtension(filepath.Ext(filename))
-	attach.contentId = cryptos.GetRandString(10)
+	attach.contentId = cryptos.RandString()
 	m.attachments = append(m.attachments, attach)
 	return nil
 }

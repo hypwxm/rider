@@ -143,16 +143,7 @@ func (r *Router) getByPath(path string, request *Request) handlerRouter {
 						}
 					}
 				}
-
-				for pIndex, param := range params {
-					//  ":"开头的说明是路由参数，
-					if strings.HasPrefix(param, ":") {
-						paramName := strings.TrimPrefix(param, ":")
-						request.params[paramName] = pathParams[pIndex]
-					}
-				}
 				return v
-
 			}
 
 			//比较拆解的两个切片的长度，如果长度不一样，肯定就不匹配
@@ -166,6 +157,8 @@ func (r *Router) getByPath(path string, request *Request) handlerRouter {
 					if pathParams[pIndex] != param {
 						request.params = make(map[string]string)
 						continue walk
+					} else if pIndex == len(params)-1 {
+						return v
 					}
 				} else {
 					paramName := strings.TrimPrefix(param, ":")
@@ -223,9 +216,12 @@ func (h handlerRouter) riderServeHTTP(context *Context) {
 	reqPath := req.Path()
 	//请求的http方法
 	reqMethod := req.Method()
+
+	//处理options
 	if strings.ToUpper(reqMethod) == http.MethodOptions {
 		allows := h.allow(reqPath)
 		w.SetHeader("allow", allows)
+		context.End()
 		return
 	}
 

@@ -10,7 +10,7 @@ func main() {
 	app.GET("/setCookie", &rider.Router{
 		Handler: func(c *rider.Context) {
 			//设置cookie
-			c.SendCookie(http.Cookie{
+			c.SetCookie(http.Cookie{
 				Name: "cookie",
 				Value: "rider",
 				MaxAge: 100000, //秒

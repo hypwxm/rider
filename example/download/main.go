@@ -15,7 +15,7 @@ func main() {
 		Handler: func(c *rider.Context) {
 			files, _ := ioutil.ReadDir(filepath.Join(wd, "src/rider/example/download"))
 			file := files[0]
-			c.Download(filepath.Join(wd, "src/rider/example/download", file.Name()), "a   dad")
+			c.Download(filepath.Join(wd, "src/rider/example/download", file.Name()), "a   dad", "attachment")
 		},
 	})
 	app.Listen(":5004")

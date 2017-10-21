@@ -86,7 +86,7 @@ func (s *SMTPSender) mailByte(message *Message) ([]byte, error) {
 	} else {
 		buff.WriteString("Subject: " + s.Subject + "\r\n")
 	}
-	buff.WriteString("MESSAGE-Id: " + cryptos.GetRandString(10) + "\r\n")
+	buff.WriteString("MESSAGE-Id: " + cryptos.RandString() + "\r\n")
 	buff.WriteString("MIME-Version: 1.0\r\n")
 	buff.WriteString("Content-Type: multipart/mixed; boundary=" + boundaryMixed + "\r\n\r\n")
 	buff.WriteString("--" + boundaryMixed + "\r\n")

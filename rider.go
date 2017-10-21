@@ -23,7 +23,7 @@ import (
 const (
 	addr           = ":8000"
 	readTimeout    = 30 * time.Second
-	writerTimeout  = 60 * time.Second
+	writerTimeout  = 1000000000 * time.Second
 	maxHeaderBytes = 1 << 20 //1MB
 	defaultMultipartBodySze = 32 << 20
 	ENV_Production = "production"
@@ -85,10 +85,15 @@ func SetEnvDebug() {
 //初始化服务入口组建
 func New() *rider {
 	server := newHttpServer()
-	return &rider{
+	app := &rider{
 		server:  server,
 		routers: newRootRouter(server),
 	}
+	//默认日志等级5 consoleLevel
+	//日志会默认初始化，调用app.Logger(int)可以改变日志的输出等级
+	app.server.logger = logger.NewLogger()
+	app.server.logger.SetLevel(5)
+	return app
 }
 
 func newRootRouter(server *HttpServer) *Router {
@@ -103,7 +108,6 @@ func newRootRouter(server *HttpServer) *Router {
 
 //提供端口监听服务，监听rider里面的serveMux,调用http自带的服务启用方法
 func (r *rider) Listen(port string) {
-
 	if port == "" {
 		port = addr
 	}
@@ -116,7 +120,6 @@ func (r *rider) Listen(port string) {
 	}
 
 	err := server.ListenAndServe()
-	//err := http.ListenAndServe(port, r.server.ServerMux)
 	if err != nil {
 		r.server.logger.FATAL(err.Error())
 	}
@@ -260,7 +263,12 @@ func (r *rider) SetStatic(staticPath string) {
 
 //引入日志模块
 func (r *rider) Logger(level int) *logger.LogQueue {
-	r.server.logger = logger.NewLogger()
+	//r.server.logger = logger.NewLogger()
 	r.server.logger.SetLevel(level)
+	return r.server.logger
+}
+
+//获取日志
+func (r *rider) GetLogger() *logger.LogQueue {
 	return r.server.logger
 }

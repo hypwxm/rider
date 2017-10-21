@@ -32,8 +32,8 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			c.StoreFormFile(formFile, filepath.Join(wd, "src/rider/example/uploadFile", formFile.FileName()))
-			c.SendFile(filepath.Join(wd, "src/rider/example/uploadFile", formFile.FileName()))
+			c.StoreFormFile(formFile, filepath.Join(wd, "src/rider/example/uploadFile", formFile.Name))
+			c.SendFile(filepath.Join(wd, "src/rider/example/uploadFile", formFile.Name))
 		},
 	})
 	//多文件上传

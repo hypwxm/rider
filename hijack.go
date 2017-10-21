@@ -4,7 +4,6 @@ import (
 	"net"
 	"bufio"
 	"strings"
-	"encoding/json"
 	"strconv"
 	"net/http"
 )
@@ -14,13 +13,18 @@ type HijackUp struct {
 	bufrw *bufio.ReadWriter
 	header http.Header   //header引用了转换成hijack之前的response的header，
 	statusCode int
+	Size int64
 }
 
 //添加默认的响应头
 var defaultHijackHeader string = "HTTP/1.1 200 OK\r\n"
 
 //设置响应头信息
+//想要hijack正确的响应http请求，必须调用这个方法
 func (hj *HijackUp) setHeaders() {
+	if hj.header.Get("Content-Encoding") != "" {
+		return
+	}
 	var header string = defaultHijackHeader
 	for k, v := range hj.header {
 		//如果响应头是setcookie，要一行行分开写
@@ -34,32 +38,6 @@ func (hj *HijackUp) setHeaders() {
 		header += k + ": " + strings.Join(v, ";") + "\r\n"
 	}
 	hj.bufrw.WriteString(header + "\r\n")
-}
-
-//给客户端发送数据
-func (hj *HijackUp) Send(data []byte) (size int) {
-	hj.setHeaders()
-	size, err := hj.bufrw.Write(data)
-	if err == nil {
-		err = hj.bufrw.Flush()
-		hj.Close()
-		//time.Sleep(10E9)
-	} else {
-		panic(err)
-	}
-	return
-}
-
-//发送json格式的数据给客户端
-func (hj *HijackUp) SendJson(data interface{}) (size int) {
-	hj.SetContentType("application/json")
-	dataJson, err := json.Marshal(data)
-	if err != nil {
-		panic(err)
-	}
-	hj.Send(dataJson)
-	hj.Close()
-	return len(dataJson)
 }
 
 //给hijack添加响应头
@@ -102,9 +80,33 @@ func (hj *HijackUp) Close() {
 }
 
 //设置响应头状态码
-func (hj *HijackUp) SetStatusCode(code int) {
+//hijack的状态码重复设置以最后一次设置为发送的状态码
+// 实现http.ResponseWriter
+// 当code为304的时候会添加一个Last-Modified响应头到header，不会再发送实体部分，所以不会走到send方法
+// 由于hijack的响应头需要自己手动发送，所所以当code为304的时候要主动设置响应头，并且flush到响应中去，还得close conn，否则，连接会一直挂起。
+
+func (hj *HijackUp) WriteHeader(code int) {
 	hj.statusCode = code
 	defaultHijackHeader = "HTTP/1.1 " + strconv.Itoa(code) + " " + http.StatusText(code) + "\r\n"
+	if code == http.StatusNotModified {
+		//hj.Send([]byte("xx"))
+		hj.setHeaders()
+		hj.bufrw.Flush()
+		hj.Close()
+	}
+}
+
+//给客户端发送数据
+func (hj *HijackUp) Write(data []byte) (size int, err error) {
+	hj.setHeaders()
+	size = 0
+	size, err = hj.bufrw.Write(data)
+	hj.Size = int64(size)
+	if err == nil {
+		err = hj.bufrw.Flush()
+		hj.Close()
+	}
+	return
 }
 
 //获取响应状态码
@@ -123,14 +125,11 @@ func (hj *HijackUp) SetCookie(cookie http.Cookie) {
 
 //重定向
 func (hj *HijackUp) Redirect(code int, targetUrl string) {
-	hj.SetHeader("Catch-Control", "no-cache")
 	hj.SetHeader("Location", targetUrl)
-	hj.SetStatusCode(code)
+	hj.WriteHeader(code)
 }
 
 //设置contenttype
-func (hj *HijackUp) SetContentType(contentType string) {
+func (hj *HijackUp) SetCType(contentType string) {
 	hj.SetHeader("Content-Type", contentType + ";charset=utf-8")
 }
-
-

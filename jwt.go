@@ -38,7 +38,7 @@ func RiderJwt(secret string, expires time.Duration) HandlerFunc {
 			c.Next(err)
 			return
 		}
-		c.SendCookie(http.Cookie{
+		c.SetCookie(http.Cookie{
 			Name:     "token",
 			Value:    rj.jwt.TokenString,
 			MaxAge:   int(expires),
@@ -54,7 +54,7 @@ func(rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	rj.context.SendCookie(http.Cookie{
+	rj.context.SetCookie(http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
 		MaxAge:   int(rj.expires),
@@ -77,12 +77,12 @@ func (rj *riderJwter) Delete(key string) (string, error) {
 }
 
 //获取token中的信息，payload
-func (rj *riderJwter) GetClaims() (jwtgo.MapClaims, error) {
+func (rj *riderJwter) Claims() (jwtgo.MapClaims, error) {
 	return rj.jwt.GetTokenClaims()
 }
 
 //获取claims中指定字段的值
-func (rj *riderJwter) GetClaimsValue(key string) interface{} {
+func (rj *riderJwter) ClaimsValue(key string) interface{} {
 	if rj.jwt.Claims == nil {
 		return nil
 	}

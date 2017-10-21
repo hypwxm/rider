@@ -26,8 +26,8 @@ func main() {
 			c.Jwt.Delete("test")
 			c.Jwt.DeleteAll()
 			c.Jwt.Set("a", "b")
-			fmt.Println(c.Jwt.GetClaims())
-			fmt.Println(c.Jwt.GetClaimsValue("a"))
+			fmt.Println(c.Jwt.Claims())
+			fmt.Println(c.Jwt.ClaimsValue("a"))
 			c.End()
 		},
 	})

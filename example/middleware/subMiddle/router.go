@@ -25,5 +25,23 @@ func Router() *rider.Router {
 			},
 		},
 	})
+
+
+	subrouter := &rider.Router{
+		Middleware: []rider.HandlerFunc{
+			func(c *rider.Context) {
+				fmt.Println("mid in mid")
+				c.Next()
+			},
+		},
+	}
+
+	router.GET("/mid", subrouter)
+	subrouter.GET("midd", &rider.Router{
+		Handler: func(c *rider.Context) {
+			fmt.Println("mide in mid in mid")
+		},
+	})
+
 	return router
 }

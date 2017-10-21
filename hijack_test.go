@@ -73,13 +73,13 @@ func TestSetCookie(t *testing.T) {
 
 func TestSetContentType(t *testing.T) {
 	hj := &HijackUp{}
-	hj.SetContentType("application/json")
+	hj.SetCType("application/json")
 	header := hj.Header()
-	if header["Content-Type"][0] != "application/json" {
+	if header["Content-Type"][0] != "application/json;charset=utf-8" {
 		t.Error("Content-Type =", header["Content-Type"])
 	}
-	hj.SetContentType("application/xx")
-	if header["Content-Type"][0] != "application/xx" {
+	hj.SetCType("application/xx")
+	if header["Content-Type"][0] != "application/xx;charset=utf-8" {
 		t.Error("Content-Type =", header["Content-Type"])
 	}
 }
@@ -114,7 +114,7 @@ func TestSend(t *testing.T) {
 	hj := &HijackUp{conn: conn, bufrw: buf}
 	hj.SetStatusCode(200)
 	hj.AddHeader("test", "test")
-	size := hj.Send([]byte("xx"))
+	size, _ := hj.Send([]byte("xx"))
 	if size != 2 {
 		t.Error(size)
 	}

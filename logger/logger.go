@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	defaultLogLevel       = errorLevel
+	defaultLogLevel       = consoleLevel
 	fatalLevel      uint8 = iota
 	panicLevel
 	errorLevel
 	warningLevel
 	infoLevel
-	debugLevel
 	consoleLevel
+	debugLevel
 )
 
 type logOrigin struct {
@@ -167,11 +167,12 @@ func (lq *LogQueue) FATAL(message ...interface{}) {
 	lc := NewLogCon(message...)
 	lc.setPrefix("FATAL")
 	for _, mess := range lc.Message {
-		lc.ColorMessageStr += BlueText(GreenBg(mess)) + " "
+		lc.ColorMessageStr += WhiteText(RedAntiWhiteText(mess)) + " "
 		lc.MessageStr += fmt.Sprintf("%s", mess) + " "
 	}
 	lq.intoQueue(lc, fatalLevel)
 	time.Sleep(100 * time.Microsecond)
+	os.Exit(1)
 }
 
 func (lq *LogQueue) ERROR(message ...interface{}) {
