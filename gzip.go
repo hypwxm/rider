@@ -6,10 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"io/ioutil"
-	"fmt"
 	"path/filepath"
-	"net"
-	"bufio"
 )
 
 
@@ -35,17 +32,16 @@ func Gzip(level int) func(c *Context) {
 		return gz
 	}
 	return func(c *Context)  {
-		acceptEncoding := c.Header().Get(HeaderAcceptEncoding)
-		if strings.Index(acceptEncoding, "gzip") < 0 {
+		if !shouldCompress(c.request.request) {
 			c.Next()
 			return
 		}
 		res := c.response
+		originW := res.writer
 
 		gz := gzPool.Get().(*gzip.Writer)
 		defer gzPool.Put(gz)
 		gz.Reset(res.writer)
-
 		c.SetHeader(HeaderContentEncoding, "gzip")
 		c.AddHeader(HeaderVary, HeaderAcceptEncoding)
 		gw := &gzipWriter{}
@@ -53,16 +49,19 @@ func Gzip(level int) func(c *Context) {
 		gw.writer = gz
 		res.writer = gw
 
-		//c.response.writer = gw
 		defer func() {
+			if res.Size == 0 {
+				//当发生panic的时候会走到这一步；将response的writer恢复为原来的writer，因为gzip的writer无法正确处理错误
+				if res.Header().Get(HeaderContentEncoding) == "gzip" {
+					res.Header().Del(HeaderContentEncoding)
+				}
+				res.writer = originW
+			}
 			gz.Close()
-			c.SetHeader("Content-Length", fmt.Sprint(c.response.Size))
 		}()
 		c.Next()
 	}
 }
-
-
 
 func (g *gzipWriter) WriteString(s string) (int, error) {
 	return g.writer.Write([]byte(s))
@@ -81,7 +80,7 @@ func (g *gzipWriter) Write(data []byte) (int, error) {
 }
 
 func shouldCompress(req *http.Request) bool {
-	if !strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
+	if !strings.Contains(req.Header.Get(HeaderAcceptEncoding), "gzip") {
 		return false
 	}
 	extension := filepath.Ext(req.URL.Path)
@@ -97,6 +96,7 @@ func shouldCompress(req *http.Request) bool {
 	}
 }
 
+/*
 func (g *gzipWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	rw := &bufio.ReadWriter{}
 	writer := bufio.NewWriter(g)
@@ -104,3 +104,4 @@ func (g *gzipWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	n, _ := net.Dial("tcp", "mv.51mzzk.com:5000")
 	return n, rw, nil
 }
+*/

@@ -4,6 +4,7 @@ import (
 	"rider"
 	"fmt"
 	"rider/smtp/FlyWhisper"
+	"errors"
 )
 
 func main() {
@@ -31,25 +32,29 @@ func main() {
 			mess := FlyWhisper.NewMessage("logger send", []string{"1825909531@qq.com"})
 			mess.AddHtml("<p>this is a mail logger</p>")
 			c.Logger.SendMail(mess)
-			c.SendJson(map[string]string{
+			c.SendJson(200, map[string]string{
 				"a": "1",
 			})
 		},
 	})
 	app.GET("/log500", &rider.Router{
 		Handler: func(c *rider.Context) {
-			c.SetStatusCode(500)
-			c.Send([]byte("error500"))
+			c.Send(200, []byte("error500"))
 		},
 	})
 	app.GET("/300", &rider.Router{
 		Handler: func(c *rider.Context) {
 			c.Hijack()
-			c.SetStatusCode(300)
 			//panic(errors.New("adad"))
-			c.Send([]byte("300"))
-			c.Send([]byte("awd"))
+			c.Send(200, []byte("300"))
+			c.Send(200, []byte("awd"))
 			//c.SetStatusCode(400)
+		},
+	})
+
+	app.GET("/panic", &rider.Router{
+		Handler: func(context *rider.Context) {
+			panic(errors.New("adadad"))
 		},
 	})
 	app.GET("/ada", &rider.Router{})

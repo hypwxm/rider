@@ -43,7 +43,7 @@ func TestNewContext(t *testing.T) {
 func TestCSend(t *testing.T) {
 	context, _, _ := newTestContext()
 
-	context.Send([]byte("test"))
+	context.Send(200, []byte("test"))
 	//context.Send([]byte("test"))
 
 	body := fmt.Sprintf("%s", wf.body)
@@ -57,7 +57,7 @@ func TestCSend(t *testing.T) {
 func TestCSendJson(t *testing.T) {
 	context, _, _ := newTestContext()
 
-	context.SendJson(map[string]string{
+	context.SendJson(200, map[string]string{
 		"a":"a",
 	})
 	mapdata := make(map[string]string)
@@ -81,7 +81,7 @@ func TestHijackSend(t *testing.T) {
 	context, _, _ := newTestContext()
 	context.Hijack()
 
-	context.Send([]byte("test"))
+	context.Send(200, []byte("test"))
 	t.Logf("%s", wf.body)
 	body := fmt.Sprintf("%s", wf.body)
 	if body != "200test" {
@@ -96,7 +96,7 @@ func TestHijackSendJson(t *testing.T) {
 
 	context.Hijack()
 
-	context.SendJson(map[string]string{
+	context.SendJson(200, map[string]string{
 		"a":"a",
 	})
 	mapdata := make(map[string]string)

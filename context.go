@@ -6,10 +6,7 @@ import (
 	"errors"
 	ctxt "context"
 	"net/url"
-	"time"
 	"os"
-	"path/filepath"
-	"io/ioutil"
 	"rider/logger"
 	"strings"
 	"encoding/json"
@@ -17,93 +14,85 @@ import (
 
 type Contexter interface {
 	//NewContext(w http.ResponseWriter, r *http.Request) *Context                            //初始化一个Context
-	Next(err ...error) error                                                       //实现中间件的链表处理
-	setCurrent(element *list.Element)                                              //设置链表中当前在处理处理器
-	setStartHandler() *list.Element                                                //设置开始处理的第一个中间件
-	getCurrentHandler() (HandlerFunc, error)                                       //获取当前处理中的中间件
-	startHandleList() error                                                        //开始处理中间件
-	release()                                                                      //释放Context
-	reset(w *Response, r *Request, server *HttpServer) *Context                    //初始化Context
-
+	Next(err ...error) error                                    //实现中间件的链表处理
+	setCurrent(element *list.Element)                           //设置链表中当前在处理处理器
+	setStartHandler() *list.Element                             //设置开始处理的第一个中间件
+	getCurrentHandler() (HandlerFunc, error)                    //获取当前处理中的中间件
+	startHandleList() error                                     //开始处理中间件
+	release()                                                   //释放Context
+	reset(w *Response, r *Request, server *HttpServer) *Context //初始化Context
 
 	//处理http.request部分
-	SetLocals(key string, value interface{})                                       //给context传递变量，该变量在整个请求的传递中一直有效
-	GetLocals(key string) interface{}                                              //通过SetLocals设置的值可以在下个中间件中获取
-	Query() url.Values                                                             //只回去请求url中的查询字符串querystring的map[]string值
-	QueryString(key string) string                                                 //根据字段名直接查询querystring某个字段名对应的值
-	Body() url.Values                                                              //只获取请求体内的请求参数，
-	BodyValue(key string) string                                                   //根据字段名直接查询"请求体"某中个字段名对应的值
-	Params() map[string]string                                                     //获取请求路由 /:id/:xx中值
-	Param(key string) string                                                       //获取请求路由中某字段的值
+	SetLocals(key string, value interface{})                           //给context传递变量，该变量在整个请求的传递中一直有效
+	GetLocals(key string) interface{}                                  //通过SetLocals设置的值可以在下个中间件中获取
+	Query() url.Values                                                 //只回去请求url中的查询字符串querystring的map[]string值
+	QueryString(key string) string                                     //根据字段名直接查询querystring某个字段名对应的值
+	Body() url.Values                                                  //只获取请求体内的请求参数，
+	BodyValue(key string) string                                       //根据字段名直接查询"请求体"某中个字段名对应的值
+	Params() map[string]string                                         //获取请求路由 /:id/:xx中值
+	Param(key string) string                                           //获取请求路由中某字段的值
 	FormFile(key string) (*UploadFile, error)                          //当请求头的content-type为multipart/form-data时，获取请求中key对应的文件信息(多个文件时，只会获取第一个)
 	FormFiles(key string) ([]*UploadFile, error)                       //当请求头的content-type为multipart/form-data时，获取请求中key对应的文件列表
 	StoreFormFile(file *UploadFile, fileName string) (int64, error)    //将file保存，fileName指定完整的路径和名称（先调用FormFile或者FormFiles将返回的file传入即可）
 	StoreFormFiles(files []*UploadFile, path string) ([]string, error) //先通过FormFiles获取文件列表，指定path目录，存储文件的文件夹。文件名将会用随机字符串加文件的后缀名（file.GetFileExt()）
-	Header() http.Header                                                   //获取请求头信息
-	HeaderValue(key string) string                                                 //根据key获取请求头某一字段的值
-	URL() string                                                                   //获取请求头的完整url
-	Path() string                                                                  //获取请求头的path
-	Method() string                                                                //获取响应头的HTTP方法
-	ClientIP() string                                                              //获取请求来源的IP地址
-	RequestID() string                                                             //获取分配的请求id
-	IsAjax() bool                                                                  //判断请求是否为ajax
-	Cookies() []*http.Cookie                                                       //获取请求的cookies
-	CookieValue(key string) (string, error)                                        //获取请求体中某一字段的cookie值
-
-
-	Hijack() (*HijackUp, error)                                                    //将http请求升级为hijack，hijack的信息保存在HijackUp中
+	Header() http.Header                                               //获取请求头信息
+	HeaderValue(key string) string                                     //根据key获取请求头某一字段的值
+	URL() string                                                       //获取请求头的完整url
+	Path() string                                                      //获取请求头的path
+	Method() string                                                    //获取响应头的HTTP方法
+	ClientIP() string                                                  //获取请求来源的IP地址
+	RequestID() string                                                 //获取分配的请求id
+	IsAjax() bool                                                      //判断请求是否为ajax
+	Cookies() []*http.Cookie                                           //获取请求的cookies
+	CookieValue(key string) (string, error)                            //获取请求体中某一字段的cookie值
+	Status() int  //获取响应的状态码
+	Hijack() (*HijackUp, error) //将http请求升级为hijack，hijack的信息保存在HijackUp中
 	SendFile(path string) error
 	PathParams() []string //通过正则匹配后得到的路径上的一些参数
-	End()                 //调用该方法表示响应已经结束
 	//Response
 	//Responser
 	ResponseHeader() http.Header           //获取完整的响应头信息
 	ResponseHeaderValue(key string) string //获取响应头的某一字段值
-	RemoveCookie(cookieName string)    //删除cookie
+	RemoveCookie(cookieName string)        //删除cookie
 
 	//模板
-	Render(tplName string, data interface{}) //负责模板渲染
+	Render(tplName string, data interface{})                 //负责模板渲染
 	Download(fileName string, name string, typ string) error //下载，fileName为完整路径,name为下载时指定的下载名称，传""使用文件本身名称
 }
 
 type Responser interface {
-	SetHeader(key, value string)          //设置响应头
-	AddHeader(key, value string)          //给响应头添加值
-	SetCType(contentType string)    //给响应头设置contenttype
-	WriteHeader(code int)               //设置响应头的状态码
-	GetStatusCode() int                   //获取响应状态码
-	Header() http.Header                  //返回响应头信息
-	HeaderValue(key string) string        //返回某一字段的响应头信息
-	Redirect(code int, targetUrl string)  //重定向
-	Write(data []byte) (size int, err error)          //给客户端发送响应,返回发送的字节长度
-	SetCookie(cookie http.Cookie)         //设置cookie
+	SetHeader(key, value string)             //设置响应头
+	AddHeader(key, value string)             //给响应头添加值
+	SetCType(contentType string)             //给响应头设置contenttype
+	WriteHeader(code int)                    //设置响应头的状态码
+	Header() http.Header                     //返回响应头信息
+	HeaderValue(key string) string           //返回某一字段的响应头信息
+	Redirect(code int, targetUrl string)     //重定向
+	Write(data []byte) (size int, err error) //给客户端发送响应,返回发送的字节长度
+	SetCookie(cookie http.Cookie)            //设置cookie
 	//Hijack() (*HijackUp, error)  //将response升级为hijack，升级后，Send,SendJson等的相应方法也会调用hijack相关的
 }
 
 var (
 	_ Responser = &Response{}
 	_ Contexter = &Context{}
-	_ Responser = &HijackUp{}
 )
 
 // "##"表示从pool取得context时必须初始化的值
 type Context struct {
 	request             *Request        //##
 	response            *Response       //##
-	statusCode              int             //##
 	handlerList         *list.List      //##
 	currentHandler      *list.Element   //##
 	ctx                 ctxt.Context    //##标准包的context
 	cancel              ctxt.CancelFunc //##
 	isHijack            bool            //##
 	hijacker            *HijackUp       //##
-	isWriteTimeout      bool            //##
-	isReadyWriteTimeout bool            //##通知作用，通知该处理即将进入超时状态并处理超时逻辑
 	isEnd               bool            //##
 	done                chan int        //##
 	server              *HttpServer     //整个服务引用的server都是同一个
 	ended               chan int        //##
-	committed         bool            //##表示状态码是否已经发送（writeHeader有无调用）
+	committed           bool            //##表示状态码是否已经发送（writeHeader有无调用）
 	Logger              *logger.LogQueue
 	Jwt                 *riderJwter //用于存储jwt
 }
@@ -133,16 +122,13 @@ func releaseContext(c *Context) {
 func (c *Context) reset(w *Response, r *Request, server *HttpServer) *Context {
 	c.request = r
 	c.response = w
-	c.statusCode = 0
 	c.currentHandler = nil
 	c.handlerList = list.New()
 	//c.ctx = ctxt.Background()
 	c.ctx = c.request.request.Context()
 	c.isHijack = false
 	c.hijacker = nil
-	c.isWriteTimeout = false
-	c.isReadyWriteTimeout = false
-	c.isEnd = false
+	//c.isEnd = false
 	c.done = make(chan int)
 	c.ended = make(chan int, 1)
 	c.server = server
@@ -150,7 +136,7 @@ func (c *Context) reset(w *Response, r *Request, server *HttpServer) *Context {
 	c.Logger = server.logger
 	c.Jwt = nil
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
-	go c.timeout()
+	//go c.timeout()
 	return c
 }
 
@@ -158,37 +144,18 @@ func (c *Context) reset(w *Response, r *Request, server *HttpServer) *Context {
 func (c *Context) release() {
 	c.response = nil
 	c.request = nil
-	c.statusCode = 0
 	c.currentHandler = nil
 	c.handlerList = list.New()
 	c.ctx = nil
 	c.isHijack = false
 	c.hijacker = nil
-	c.isReadyWriteTimeout = false
-	c.isWriteTimeout = false
 	c.isEnd = false
 	c.done = nil
-	c.ended = nil
+	//c.ended = nil
 	c.hijacker = nil
 	c.Logger = nil
 	c.Jwt = nil
 	c.committed = false
-}
-
-//请求超时
-func (c *Context) timeout() {
-	urlPath := c.request.Path()
-	method := c.request.Method()
-	select {
-	case <-c.done:
-		//发送响应数据之前如果未超时就不算超时，发送数据的过程不算入时间
-		return
-	case <-time.After(writerTimeout):
-		//响应超时了
-		c.isReadyWriteTimeout = true
-		HttpError(c, method+" "+urlPath+" response timeout", 504)
-		c.isWriteTimeout = true
-	}
 }
 
 //处理下一个中间件
@@ -257,7 +224,6 @@ func (c *Context) SetLocals(key string, val interface{}) {
 func (c *Context) GetLocals(key string) interface{} {
 	return c.ctx.Value(key)
 }
-
 
 //获取request的query  map[string][]string
 func (c *Context) Query() url.Values {
@@ -391,28 +357,6 @@ func (c *Context) SetCType(contentType string) {
 	}
 }
 
-//设置响应的状态码
-func (c *Context) SetStatusCode(code int) {
-	if c.committed {
-		if c.isEnd {
-			c.server.logger.PANIC("can not send response status after sending a response")
-		} else {
-			c.server.logger.PANIC("can not set the status code again")
-		}
-		return
-	}
-	c.statusCode = code
-	//committed响应状态码已设置
-	c.committed = true
-}
-
-//获取响应状态码
-func (c *Context) GetStatusCode() int {
-	if c.isHijack {
-		return c.hijacker.GetStatusCode()
-	}
-	return c.response.GetStatusCode()
-}
 
 //获取响应头信息
 func (c *Context) ResponseHeader() http.Header {
@@ -451,64 +395,57 @@ func (c *Context) RemoveCookie(cookieName string) {
 }
 
 //
-func (c *Context) CloseNotify() <-chan bool{
+func (c *Context) CloseNotify() <-chan bool {
 	return c.response.CloseNotify()
 }
 
-/*
-	if c.isWriteTimeout {
-		return
+
+
+//获取响应状态码
+func (c *Context) Status() int {
+	if c.isHijack {
+		return c.hijacker.status
+	} else {
+		return c.response.status
 	}
-	如果超时了调用SendJson(), Redirect(), Send()不会再像客户端发送消息
-*/
+}
+
+
+func (c *Context) writeHeader(code int) {
+	if c.isHijack {
+		c.hijacker.WriteHeader(code)
+	} else {
+		c.response.WriteHeader(code)
+	}
+}
+
 
 //给客户端发送响应
-func (c *Context) Send(data []byte) (size int, err error) {
+func (c *Context) Send(code int, data []byte) (size int, err error) {
 	if c.ResponseHeader().Get(HeaderContentType) == "" {
 		c.SetHeader(HeaderContentType, http.DetectContentType(data))
 	}
-	if c.isWriteTimeout {
-		return
-	}
-	if c.isEnd {
-		c.server.logger.PANIC("can not send a response again")
-		return
-	}
-	c.End()
 
+	c.writeHeader(code)
 	if c.isHijack {
-		if c.statusCode != 0 {
-			c.hijacker.WriteHeader(c.statusCode)
-		}
 		return c.hijacker.Write(data)
 	} else {
-		if c.statusCode != 0 {
-			c.response.WriteHeader(c.statusCode)
-		}
 		return c.response.Write(data)
 	}
 }
 
 //发送json格式数据给客户端
-func (c *Context) SendJson(data interface{}) {
+func (c *Context) SendJson(code int, data interface{}) {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		panic(err)
 	}
 	c.SetCType("application/json")
-	c.Send(jsonData)
+	c.Send(code, jsonData)
 }
 
 //重定向
 func (c *Context) Redirect(code int, targetUrl string) {
-	if c.isWriteTimeout {
-		return
-	}
-	if c.isEnd {
-		c.server.logger.PANIC("can not send a response again")
-		return
-	}
-	c.End()
 	if code < 300 || code > 308 {
 		c.server.logger.PANIC("Invalid redirect status code")
 		return
@@ -518,34 +455,14 @@ func (c *Context) Redirect(code int, targetUrl string) {
 			code = 307
 		}
 	}
-	if c.isHijack {
-		c.hijacker.Redirect(code, targetUrl)
-	} else {
-		c.response.Redirect(code, targetUrl)
-	}
-}
-
-//通知响应结束
-func (c *Context) End() {
-	if c.isEnd {
-		c.server.logger.PANIC("can not send a response again")
-		return
-	}
-	c.isEnd = true
-	if !(c.isReadyWriteTimeout) {
-		//当状态进入超时时，不会给done传递信号
-		c.done <- 0
-	}
-	close(c.done)
-	c.ended <- 0
-	close(c.ended)
+	c.response.Redirect(code, targetUrl)
 }
 
 //hijack相关实现
 
 //升级responsewrite为hijack
 func (c *Context) Hijack() (*HijackUp, error) {
-	var originHeader http.Header =  c.ResponseHeader()
+	var originHeader http.Header = c.ResponseHeader()
 	hj, ok := c.response.writer.(http.Hijacker)
 	if !ok {
 		return nil, errors.New("serve can not upgrade to hijack")
@@ -578,7 +495,6 @@ func (c *Context) Render(tplName string, data interface{}) {
 		HttpError(c, err.Error(), 404)
 		return
 	}
-	c.End()
 }
 
 //文件服务器
@@ -600,37 +516,17 @@ func (c *Context) SendFile(path string) error {
 		return errors.New("file is invalid type directory")
 	}
 
-	/*chunk, err := ioutil.ReadAll(fp)
-	if err != nil {
-		HttpError(c, err.Error(), 404)
-		return err
-	}
-
-
-	if c.Method() == http.MethodHead {
-
-	}*/
-
 	c.response.Size = fi.Size()
 	if setWeakEtag(c, fp, c.request.request) {
-		c.Send([]byte(""))
+		c.Send(304, []byte(""))
 		return nil
 	}
 
 	if c.isHijack {
-		//获取文件的mimetype，让客户端以正确的方式读取文件
-		//****注释部分为简易方法实现，HijackUp实现了http.ResponseWriter，所以调用http.ServeContent最合适
-		/*mediaType := mime.TypeByExtension(filepath.Ext(path))
-		c.SetCType(mediaType)
-		buff := make([]byte, fi.Size())
-		n, _ := io.ReadFull(fp, buff)
-		c.Send(buff[:n])*/
 		http.ServeContent(c.hijacker, c.request.request, fi.Name(), fi.ModTime(), fp)
 	} else {
-		//io.Copy(c.response.writer, fp)
 		http.ServeContent(c.response.writer, c.request.request, fi.Name(), fi.ModTime(), fp)
 	}
-	c.End()
 	return nil
 }
 
@@ -644,31 +540,10 @@ func (c *Context) Download(fileName string, name string, typ string) error {
 		c.server.logger.WARNING(fileName, "filename can not be empty. ")
 		return errors.New("filename can not be empty. ")
 	}
-	f, err := os.Stat(fileName)
-	if err != nil {
-		c.server.logger.ERROR(err)
-		return err
-	}
-	if f.IsDir() {
-		//不能为文件夹，
-		c.server.logger.ERROR(fileName, "is a folder, compress the folder and send it again")
-		return errors.New(fileName + "is a folder, compress the folder and send it again")
-	}
-	if name == "" {
-		//那么可以包含空格，但是不能为零值字符串
-		name = filepath.Base(fileName)
-	}
-	//下载的文件名为传入的文件名（不为空）；或者默认的文件名
-	file, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		HttpError(c, err.Error(), 500)
-		return err
-	}
 	if strings.TrimSpace(typ) == "" {
 		typ = "attachment"
 	}
-	c.SetCType(http.DetectContentType(file))
-	c.SetHeader("Content-Disposition", typ + ";filename="+name)
-	c.Send(file)
+	c.SetHeader("Content-Disposition", typ+";filename="+name)
+	c.SendFile(fileName)
 	return nil
 }

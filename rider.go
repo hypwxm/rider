@@ -23,7 +23,7 @@ import (
 const (
 	addr           = ":8000"
 	readTimeout    = 30 * time.Second
-	writerTimeout  = 1000000000 * time.Second
+	writerTimeout  = 10 * time.Second
 	maxHeaderBytes = 1 << 20 //1MB
 	defaultMultipartBodySze = 32 << 20
 	ENV_Production = "production"
@@ -115,7 +115,7 @@ func (r *rider) Listen(port string) {
 		Addr:           port,
 		Handler:        r.routers,
 		ReadTimeout:    readTimeout,
-		WriteTimeout:   0,
+		WriteTimeout:   writerTimeout,
 		MaxHeaderBytes: maxHeaderBytes,
 	}
 

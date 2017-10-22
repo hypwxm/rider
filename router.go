@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 	"container/list"
-	"runtime/debug"
 	"regexp"
 	"rider/logger"
 	"time"
+	"runtime/debug"
 )
 
 //跟路由和子路由需要实现的方法
@@ -177,19 +177,18 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	routerStart := time.Now()
 	context := newContext(w, req, r.GetServer())
 	defer func() {
+		statusCode := context.Status()
 		if err, ok := recover().(error); ok {
 			r.server.logger.ERROR(err.Error())
 			r.server.logger.PANIC(string(debug.Stack()))
-			if context.isWriteTimeout {
-				//超时的话会给客户端响应超时信息，无需发送响应
-				return
-			}
-			routerEnd := time.Now()
-			routerDuration := routerEnd.Sub(routerStart)
-			logger.HttpLogger(r.GetServer().logger, context.Method(), context.Path(), context.GetStatusCode(), routerDuration, context.RequestID())
+			statusCode = http.StatusInternalServerError
 			HttpError(context, err.Error(), http.StatusInternalServerError)
-			releaseContext(context)
 		}
+		//记录http请求耗时
+		routerEnd := time.Now()
+		routerDuration := routerEnd.Sub(routerStart)
+		logger.HttpLogger(r.GetServer().logger, context.Method(), context.Path(), statusCode, routerDuration, context.RequestID())
+		releaseContext(context)
 	}()
 
 	if handler := r.getByPath(req.URL.Path, context.request); handler != nil {
@@ -197,16 +196,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	} else {
 		HttpError(context, "does not match the request path", 404)
 	}
-
-	//只有通知结束了，才能结束，客户端在为接收到响应前处于挂起状态。
-	<- context.ended
-
-	//记录http请求耗时
-	routerEnd := time.Now()
-	routerDuration := routerEnd.Sub(routerStart)
-	logger.HttpLogger(r.GetServer().logger, context.Method(), context.Path(), context.GetStatusCode(), routerDuration, context.RequestID())
-	//
-	releaseContext(context)
 }
 
 func (h handlerRouter) riderServeHTTP(context *Context) {
@@ -221,7 +210,6 @@ func (h handlerRouter) riderServeHTTP(context *Context) {
 	if strings.ToUpper(reqMethod) == http.MethodOptions {
 		allows := h.allow(reqPath)
 		w.SetHeader("allow", allows)
-		context.End()
 		return
 	}
 

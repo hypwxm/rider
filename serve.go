@@ -58,11 +58,6 @@ var ErrorHandle func(c *Context, err string, code int)
 
 
 func HttpError(c *Context, err string, code int) {
-	if c.isEnd {
-		c.server.logger.PANIC("can not send a response again")
-		return
-	}
-	c.SetStatusCode(code)
 	ErrorHandle(c, err, code)
 }
 
@@ -85,6 +80,6 @@ func init() {
 			c.server.logger.DEBUG(err, "\r\n", string(debug.Stack()))
 			errMsg.Stack = string(debug.Stack())
 		}
-		c.SendJson(errMsg)
+		c.SendJson(code, errMsg)
 	}
 }

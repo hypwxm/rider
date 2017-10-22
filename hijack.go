@@ -12,7 +12,7 @@ type HijackUp struct {
 	conn net.Conn
 	bufrw *bufio.ReadWriter
 	header http.Header   //header引用了转换成hijack之前的response的header，
-	statusCode int
+	status int
 	Size int64
 }
 
@@ -86,7 +86,7 @@ func (hj *HijackUp) Close() {
 // 由于hijack的响应头需要自己手动发送，所所以当code为304的时候要主动设置响应头，并且flush到响应中去，还得close conn，否则，连接会一直挂起。
 
 func (hj *HijackUp) WriteHeader(code int) {
-	hj.statusCode = code
+	hj.status = code
 	defaultHijackHeader = "HTTP/1.1 " + strconv.Itoa(code) + " " + http.StatusText(code) + "\r\n"
 	if code == http.StatusNotModified {
 		//hj.Send([]byte("xx"))
@@ -101,17 +101,12 @@ func (hj *HijackUp) Write(data []byte) (size int, err error) {
 	hj.setHeaders()
 	size = 0
 	size, err = hj.bufrw.Write(data)
-	hj.Size = int64(size)
+	hj.Size += int64(size)
 	if err == nil {
 		err = hj.bufrw.Flush()
-		hj.Close()
 	}
+	hj.Close()
 	return
-}
-
-//获取响应状态码
-func (hj *HijackUp) GetStatusCode() int {
-	return hj.statusCode
 }
 
 //设置cookie
@@ -122,14 +117,7 @@ func (hj *HijackUp) SetCookie(cookie http.Cookie) {
 	//无需实行，，因为写cookie的方法时http.SetCookie(w, &http.Cookie{}) 。w实现了io.writer接口。hijack也实现了这个接口，所以直接用http.SetCookie就可以了
 }
 
-
-//重定向
-func (hj *HijackUp) Redirect(code int, targetUrl string) {
-	hj.SetHeader("Location", targetUrl)
-	hj.WriteHeader(code)
-}
-
 //设置contenttype
 func (hj *HijackUp) SetCType(contentType string) {
-	hj.SetHeader("Content-Type", contentType + ";charset=utf-8")
+	hj.SetHeader("Content-Type", contentType)
 }

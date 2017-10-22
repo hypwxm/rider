@@ -1,0 +1,3 @@
+[HTTP]  GET / 404 521.685µs => [ db8568096f25e45f498730aa4b25103d ]
+[HTTP]  GET /favicon.ico 404 151.784µs => [ 9a3255dbcd1a625733332f054d1c6fb5 ]
+[HTTP]  GET /panic 404 94.905µs => [ 94c2372bf2f447431fd274792455fad7 ]

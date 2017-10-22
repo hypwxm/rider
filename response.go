@@ -15,10 +15,9 @@ import (
 type (
 	Response struct {
 		writer    http.ResponseWriter
-		Status    int
+		status    int
 		header    http.Header
 		committed bool //响应吗发送状态
-		isEnd     bool
 		isHijack  bool
 		server    *HttpServer
 		Size      int64
@@ -58,25 +57,15 @@ func (r *Response) SetHeader(key, val string) {
 }
 
 func (r *Response) SetCType(contenttype string) {
-	r.SetHeader("Content-Type", contenttype+"; charset=utf-8")
-}
-
-
-//获取状态码
-func (r *Response) GetStatusCode() int {
-	return r.Status
+	r.SetHeader("Content-Type", contenttype)
 }
 
 func (r *Response) WriteHeader(code int) {
 	if r.committed {
-		if r.isEnd {
-			r.server.logger.PANIC("can not send response status after sending a response")
-		} else {
-			r.server.logger.PANIC("can not set the status code again")
-		}
+		r.server.logger.PANIC("can not set the status code again")
 		return
 	}
-	r.Status = code
+	r.status = code
 	r.writer.WriteHeader(code)
 	r.committed = true
 }
@@ -86,21 +75,8 @@ func (r *Response) Write(data []byte) (size int, err error) {
 	if !r.committed {
 		r.WriteHeader(http.StatusOK)
 	}
-
-	if r.isEnd {
-		r.server.logger.PANIC("sent again after res was sent")
-		return
-	}
-
-	r.End()
-	r.Size = int64(len(data))
+	r.Size += int64(len(data))
 	return r.writer.Write(data)
-}
-
-
-//stop current response
-func (r *Response) End() {
-	r.isEnd = true
 }
 
 // Flush implements the http.Flusher interface to allow an HTTP handler to flush
@@ -121,9 +97,8 @@ func (r *Response) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 func (r *Response) load(w http.ResponseWriter, server *HttpServer) *Response {
 	r.writer = w
 	r.header = w.Header()
-	r.Status = http.StatusOK
+	r.status = http.StatusOK
 	r.committed = false
-	r.isEnd = false
 	r.server = server
 	setConfigHeaders(r.Header())
 	return r
@@ -133,8 +108,7 @@ func (r *Response) load(w http.ResponseWriter, server *HttpServer) *Response {
 func (r *Response) release() {
 	r.writer = nil
 	r.header = nil
-	r.Status = http.StatusOK
-	r.isEnd = false
+	r.status = http.StatusOK
 	r.committed = false
 }
 
@@ -224,7 +198,6 @@ func setWeakEtag(c *Context, fi *os.File, r *http.Request) bool {
 	if etag != "" {
 		c.SetHeader(HeaderEtag, etag)
 		if ifEqual {
-			c.SetStatusCode(http.StatusNotModified)
 			return true
 		}
 	}

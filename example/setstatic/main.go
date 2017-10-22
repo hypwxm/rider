@@ -4,23 +4,23 @@ import (
 	"rider"
 	"os"
 	"path/filepath"
-	"time"
-	"fmt"
 )
 
 func main() {
 	app := rider.New()
 	app.Logger(8)
+
 	wd, _ := os.Getwd()
 	app.AddMiddleware(rider.Gzip(-1))
 	app.SetStatic(filepath.Join(wd, "src/rider/example/setStatic/public"))
-	app.GET("/xx", &rider.Router{
+	app.GET("/xxx", &rider.Router{
 		Handler: func(c *rider.Context) {
-			start := time.Now()
-			c.Hijack()
-			fmt.Println(time.Now().Sub(start))
 
-			c.Send([]byte("adad"))
+			//time.Sleep(15e9)
+			//c.Redirect(307, "https://www.baidu.com")
+			//panic(errors.New("xxx"))
+			c.Hijack()
+			c.Send(200, []byte("点滴家啊阿娇无敌啊叫i 啊叫的i 啊基地是奥会降低啊阿娇的i 哦啊叫"))
 		},
 	})
 	app.Listen(":5001")

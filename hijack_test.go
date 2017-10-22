@@ -55,7 +55,7 @@ func TestHeaderValue(t *testing.T) {
 
 func TestSetStatusCode(t *testing.T) {
 	hj := &HijackUp{}
-	hj.SetStatusCode(404)
+	hj.WriteHeader(404)
 	if defaultHijackHeader != "HTTP/1.1 404 Not Found\r\n" {
 		t.Error(defaultHijackHeader)
 	}
@@ -73,12 +73,12 @@ func TestSetCookie(t *testing.T) {
 
 func TestSetContentType(t *testing.T) {
 	hj := &HijackUp{}
-	hj.SetCType("application/json")
+	hj.SetCType("application/json;charset=utf-8")
 	header := hj.Header()
 	if header["Content-Type"][0] != "application/json;charset=utf-8" {
 		t.Error("Content-Type =", header["Content-Type"])
 	}
-	hj.SetCType("application/xx")
+	hj.SetCType("application/xx;charset=utf-8")
 	if header["Content-Type"][0] != "application/xx;charset=utf-8" {
 		t.Error("Content-Type =", header["Content-Type"])
 	}
@@ -112,9 +112,9 @@ func TestSend(t *testing.T) {
 		t.Error(err)
 	}
 	hj := &HijackUp{conn: conn, bufrw: buf}
-	hj.SetStatusCode(200)
 	hj.AddHeader("test", "test")
-	size, _ := hj.Send([]byte("xx"))
+	hj.WriteHeader(200)
+	size, _ := hj.Write([]byte("xx"))
 	if size != 2 {
 		t.Error(size)
 	}
