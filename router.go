@@ -16,6 +16,7 @@ import (
 
 //跟路由和子路由需要实现的方法
 type BaseRouter interface {
+	USE(handlers ...HandlerFunc) //添加中间件
 	ANY(path string, router *Router) *Router
 	POST(path string, router *Router)
 	GetServer() *HttpServer
@@ -257,7 +258,7 @@ func (r *Router) doHandlers(context *Context) {
 }
 
 //调用使用添加中间件(将app服务的中间件加进来)
-func (r *Router) AddMiddleware(middleware ...HandlerFunc) {
+func (r *Router) USE(middleware ...HandlerFunc) {
 	r.Middleware = append(r.Middleware, middleware...)
 }
 

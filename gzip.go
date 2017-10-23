@@ -22,7 +22,7 @@ type gzipWriter struct {
 	writer *gzip.Writer
 }
 
-func Gzip(level int) func(c *Context) {
+func Gzip(level int) HandlerFunc {
 	var gzPool sync.Pool
 	gzPool.New = func() interface{} {
 		gz, err := gzip.NewWriterLevel(ioutil.Discard, level)

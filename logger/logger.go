@@ -49,7 +49,7 @@ func NewLogCon(message ...interface{}) *logCon {
 
 func logCaller(lc *logCon) (*logCon, error) {
 	if lc.level == debugLevel {
-		pc, file, line, ok := runtime.Caller(0)
+		pc, file, line, ok := runtime.Caller(2)
 		if !ok {
 			return nil, errors.New("error when call runtime.Caller")
 		}

@@ -206,7 +206,7 @@ func (r *rider) GetServer() *HttpServer {
 }
 
 //为app服务添加中间处理
-func (r *rider) AddMiddleware(handlers ...HandlerFunc) {
+func (r *rider) USE(handlers ...HandlerFunc) {
 	r.routers.Middleware = append(r.routers.Middleware, handlers...)
 }
 

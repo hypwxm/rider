@@ -179,18 +179,6 @@ func setConfigHeaders(header http.Header) {
 	if DefaultConfigHeaders.Date != "" {
 		header.Set(HeaderDate, DefaultConfigHeaders.Date)
 	}
-	if DefaultConfigHeaders.XContentTypeOptions != "" {
-		header.Set(HeaderXContentTypeOptions, DefaultConfigHeaders.XContentTypeOptions)
-	}
-	if DefaultConfigHeaders.XXSSProtection != "" {
-		header.Set(HeaderXXSSProtection, DefaultConfigHeaders.XXSSProtection)
-	}
-	if DefaultConfigHeaders.XFrameOptions != "" {
-		header.Set(HeaderXFrameOptions, DefaultConfigHeaders.XFrameOptions)
-	}
-	if DefaultConfigHeaders.XDownloadOptions != "" {
-		header.Set(HeaderXDownloadOptions, DefaultConfigHeaders.XDownloadOptions)
-	}
 }
 
 func setWeakEtag(c *Context, fi *os.File, r *http.Request) bool {

@@ -51,9 +51,9 @@ type Contexter interface {
 	PathParams() []string //通过正则匹配后得到的路径上的一些参数
 	//Response
 	//Responser
-	ResponseHeader() http.Header           //获取完整的响应头信息
-	ResponseHeaderValue(key string) string //获取响应头的某一字段值
-	RemoveCookie(cookieName string)        //删除cookie
+	WHeader() http.Header           //获取完整的响应头信息
+	WHeaderValue(key string) string //获取响应头的某一字段值
+	DeleteCookie(cookieName string)        //删除cookie
 
 	//模板
 	Render(tplName string, data interface{})                 //负责模板渲染
@@ -359,7 +359,7 @@ func (c *Context) SetCType(contentType string) {
 
 
 //获取响应头信息
-func (c *Context) ResponseHeader() http.Header {
+func (c *Context) WHeader() http.Header {
 	if c.isHijack {
 		return c.hijacker.Header()
 	} else {
@@ -368,7 +368,7 @@ func (c *Context) ResponseHeader() http.Header {
 }
 
 //获取响应头的某一字段的值
-func (c *Context) ResponseHeaderValue(key string) string {
+func (c *Context) WHeaderValue(key string) string {
 	if c.isHijack {
 		return c.hijacker.HeaderValue(key)
 	} else {
@@ -389,7 +389,7 @@ func (c *Context) SetCookie(cookie http.Cookie) {
 }
 
 //删除cookie
-func (c *Context) RemoveCookie(cookieName string) {
+func (c *Context) DeleteCookie(cookieName string) {
 	cookie := http.Cookie{Name: cookieName, MaxAge: -1, Path: "/"}
 	c.SetCookie(cookie)
 }
@@ -422,7 +422,7 @@ func (c *Context) writeHeader(code int) {
 
 //给客户端发送响应
 func (c *Context) Send(code int, data []byte) (size int, err error) {
-	if c.ResponseHeader().Get(HeaderContentType) == "" {
+	if c.WHeader().Get(HeaderContentType) == "" {
 		c.SetHeader(HeaderContentType, http.DetectContentType(data))
 	}
 
@@ -462,7 +462,7 @@ func (c *Context) Redirect(code int, targetUrl string) {
 
 //升级responsewrite为hijack
 func (c *Context) Hijack() (*HijackUp, error) {
-	var originHeader http.Header = c.ResponseHeader()
+	var originHeader http.Header = c.WHeader()
 	hj, ok := c.response.writer.(http.Hijacker)
 	if !ok {
 		return nil, errors.New("serve can not upgrade to hijack")

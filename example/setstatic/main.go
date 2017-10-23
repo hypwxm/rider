@@ -20,6 +20,7 @@ func main() {
 			//c.Redirect(307, "https://www.baidu.com")
 			//panic(errors.New("xxx"))
 			c.Hijack()
+			c.Logger.DEBUG("xxx")
 			c.Send(200, []byte("点滴家啊阿娇无敌啊叫i 啊叫的i 啊基地是奥会降低啊阿娇的i 哦啊叫"))
 		},
 	})

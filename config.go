@@ -6,11 +6,6 @@ import (
 )
 
 type ConfigHeaders struct {
-	//secure相关
-	XDownloadOptions string `json:"X-Download-Options"`  //noopen
-	XFrameOptions string `json:"X-Frame-Options"`   //SAMEORIGIN
-	XContentTypeOptions string `json:"X-Content-Type-Options"`  //nosniff
-	XXSSProtection string `json:"X-XSS-Protection"`  //1; mode=block"
 
 
 	//其他默认响应头
@@ -25,10 +20,6 @@ type Config struct {
 
 
 var DefaultConfigHeaders *ConfigHeaders = &ConfigHeaders{
-	XDownloadOptions: "noopen",
-	XFrameOptions: "SAMEORIGIN",
-	XContentTypeOptions: "nosniff",
-	XXSSProtection: "1; mode=block",
 	Server: "rider",
 	Date: time.Now().UTC().Format(http.TimeFormat),
 }
@@ -116,6 +107,4 @@ const (
 	HeaderXXSSProtection          = "X-XSS-Protection"
 	HeaderXFrameOptions           = "X-Frame-Options"
 	HeaderContentSecurityPolicy   = "Content-Security-Policy"
-	HeaderXCSRFToken              = "X-CSRF-Token"
-	HeaderXDownloadOptions		  = "X-Download-Options"
 )
