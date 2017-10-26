@@ -8,11 +8,11 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider3.New()
 	app.Logger(8)
 	wd, _ := os.Getwd()
-	app.GET("/download", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/download", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			files, _ := ioutil.ReadDir(filepath.Join(wd, "src/rider/example/download"))
 			file := files[0]
 			c.Download(filepath.Join(wd, "src/rider/example/download", file.Name()), "a   dad", "attachment")

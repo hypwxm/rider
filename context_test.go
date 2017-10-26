@@ -12,8 +12,8 @@ import (
 
 
 
-func newTestContext() (*Context, http.ResponseWriter, *http.Request) {
-	var context *Context
+func newTestContext() (Context, http.ResponseWriter, *http.Request) {
+	var context Context
 	var hw *riderWriter
 	var req *http.Request
 	hw = &riderWriter{}
@@ -30,10 +30,10 @@ func newTestContext() (*Context, http.ResponseWriter, *http.Request) {
 
 func TestNewContext(t *testing.T) {
 	context, hw, req := newTestContext()
-	if context.response.writer != hw {
+	if context.Response().writer != hw {
 		t.Error("设置response错误")
 	}
-	if context.request.request != req {
+	if context.Request().request != req {
 		t.Error("设置request错误")
 	}
 

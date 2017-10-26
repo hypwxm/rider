@@ -8,26 +8,26 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider3.New()
 	wd, _ := os.Getwd()
 	app.SetViews(filepath.Join(wd, "src/rider/example/uploadFile/views"), "tpl")
 	//app.CacheViews()
-	app.GET("/up1", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/up1", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.Hijack()
 			c.Render("uploads", nil)
 			time.Sleep(10e9)
 
 		},
 	})
-	app.GET("/up2", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/up2", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.Render("uploadsFiles", nil)
 		},
 	})
 	//当文件上传
-	app.POST("/uploads", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.POST("/uploads", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			formFile, err := c.FormFile("file")
 			if err != nil {
 				panic(err)
@@ -37,8 +37,8 @@ func main() {
 		},
 	})
 	//多文件上传
-	app.POST("/uploadsFiles", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.POST("/uploadsFiles", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			formFiles, err := c.FormFiles("files")
 			if err != nil {
 				panic(err)

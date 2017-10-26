@@ -21,14 +21,14 @@ import (
 )
 
 const (
-	addr           = ":8000"
-	readTimeout    = 30 * time.Second
-	writerTimeout  = 10 * time.Second
-	maxHeaderBytes = 1 << 20 //1MB
+	addr                    = ":8000"
+	readTimeout             = 30 * time.Second
+	writerTimeout           = 60 * time.Second
+	maxHeaderBytes          = 1 << 20 //1MB
 	defaultMultipartBodySze = 32 << 20
-	ENV_Production = "production"
-	ENV_Development = "development"
-	ENV_Debug = "debug"
+	ENV_Production          = "production"
+	ENV_Development         = "development"
+	ENV_Debug               = "debug"
 )
 
 //默认的执行的系统的环境，生产者环境
@@ -47,15 +47,15 @@ type baseRider interface {
 	PATCH(path string, router *Router)
 	TRACE(path string, router *Router)
 	CONNECT(path string, router *Router)
-	GetServer() *HttpServer   //获取
+	GetServer() *HttpServer //获取
 	AddMiddleware(handlers ...HandlerFunc)
 	Error(errorHandle func(c *Context, err string, code int))
 }
 
 //http服务的入口，用户初始化和缓存服务的一些信息
 type rider struct {
-	server   *HttpServer //注册服务用的serveMu，全局统一
-	routers  *Router
+	server  *HttpServer //注册服务用的serveMu，全局统一
+	routers *Router
 }
 
 //设置环境
@@ -81,7 +81,6 @@ func SetEnvDebug() {
 	SetEnvMode("debug")
 }
 
-
 //初始化服务入口组建
 func New() *rider {
 	server := newHttpServer()
@@ -100,7 +99,6 @@ func newRootRouter(server *HttpServer) *Router {
 	_router := NewRouter()
 	_router.isRoot = true
 	_router.fullPath = "/"
-	_router.rootPath = "/"
 	_router.Method = "ANY"
 	_router.SetServer(server)
 	return _router
@@ -128,76 +126,107 @@ func (r *rider) Listen(port string) {
 //http请求的方法的入口（ANY, GET, POST...VIA）
 //path：一个跟路径，函数内部根据这个根路径创建一个根路由routers，用来管理router子路由
 //router：这个根路径对应的子路由入口。
-func (r *rider) registerRiderRouter(method string, path string, router *Router) {
+func (r *rider) addRiderRouter(method string, path string, handlers ...HandlerFunc) {
 	//将app的中间处理函数传给routers根路由(后面再由routers传给其各个子路由)
 	//r.routers.FrontMiddleware(r.Middleware...)
 	//将服务注入这个组建根路由，确保路由是创立在这个服务上
 	//r.routers.SetServer(r.server)
 	//将服务注入这个组建子路由，确保路由是创立在这个服务上
-	router.SetServer(r.server)
+	//router.SetServer(r.server)
 	//服务注册入口内部的入口
 	switch method {
 	case "ANY":
-		r.routers.ANY(path, router)
+		r.routers.ANY(path, handlers...)
 	case "GET":
-		r.routers.GET(path, router)
+		r.routers.GET(path, handlers...)
 	case "POST":
-		r.routers.POST(path, router)
+		r.routers.POST(path, handlers...)
 	case "HEAD":
-		r.routers.HEAD(path, router)
+		r.routers.HEAD(path, handlers...)
 	case "DELETE":
-		r.routers.DELETE(path, router)
+		r.routers.DELETE(path, handlers...)
 	case "PUT":
-		r.routers.PUT(path, router)
+		r.routers.PUT(path, handlers...)
 	case "PATCH":
-		r.routers.PATCH(path, router)
+		r.routers.PATCH(path, handlers...)
 	case "OPTIONS":
-		r.routers.OPTIONS(path, router)
+		r.routers.OPTIONS(path, handlers...)
 	case "CONNECT":
-		r.routers.CONNECT(path, router)
+		r.routers.CONNECT(path, handlers...)
 	case "TRACE":
-		r.routers.TRACE(path, router)
+		r.routers.TRACE(path, handlers...)
 	}
 }
 
-func (r *rider) ANY(path string, router *Router) {
-	r.registerRiderRouter("ANY", path, router)
+//router：这个根路径对应的子路由入口。
+func (r *rider) addChildRouter(path string, router ...IsRouterHandler) {
+
+	if len(router) == 0 {
+		r.server.logger.FATAL("nothing todo with no handler router")
+	}
+
+	for k, _ := range router {
+
+		if k < len(router) - 1 {
+			if _, ok := router[k].(HandlerFunc); !ok {
+				r.server.logger.FATAL("put kid router at the end when register kid router")
+			}
+		} else {
+			if route, ok := router[k].(*Router); !ok {
+				r.server.logger.FATAL("if you want register handler directly do not use kid")
+			} else {
+				//将服务注入这个组建子路由，确保路由是创立在这个服务上
+				route.SetServer(r.server)
+			}
+		}
+	}
+
+	//服务注册入口内部的入口
+	r.routers.Kid(path, router...)
 }
 
-func (r *rider) GET(path string, router *Router) {
-	r.registerRiderRouter("GET", path, router)
+func (r *rider) Kid(path string, middleware ...IsRouterHandler) {
+	r.addChildRouter(path, middleware...)
 }
 
-func (r *rider) POST(path string, router *Router) {
-	r.registerRiderRouter("POST", path, router)
+func (r *rider) ANY(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("ANY", path, handlers...)
 }
 
-func (r *rider) HEAD(path string, router *Router) {
-	r.registerRiderRouter("HEAD", path, router)
+func (r *rider) GET(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("GET", path, handlers...)
 }
 
-func (r *rider) OPTIONS(path string, router *Router) {
-	r.registerRiderRouter("OPTIONS", path, router)
+func (r *rider) POST(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("POST", path, handlers...)
 }
 
-func (r *rider) DELETE(path string, router *Router) {
-	r.registerRiderRouter("DELETE", path, router)
+func (r *rider) HEAD(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("HEAD", path, handlers...)
 }
 
-func (r *rider) PUT(path string, router *Router) {
-	r.registerRiderRouter("PUT", path, router)
+func (r *rider) OPTIONS(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("OPTIONS", path, handlers...)
 }
 
-func (r *rider) PATCH(path string, router *Router) {
-	r.registerRiderRouter("PATCH", path, router)
+func (r *rider) DELETE(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("DELETE", path, handlers...)
 }
 
-func (r *rider) TRACE(path string, router *Router) {
-	r.registerRiderRouter("TRACE", path, router)
+func (r *rider) PUT(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("PUT", path, handlers...)
 }
 
-func (r *rider) CONNECT(path string, router *Router) {
-	r.registerRiderRouter("CONNECT", path, router)
+func (r *rider) PATCH(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("PATCH", path, handlers...)
+}
+
+func (r *rider) TRACE(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("TRACE", path, handlers...)
+}
+
+func (r *rider) CONNECT(path string, handlers ...HandlerFunc) {
+	r.addRiderRouter("CONNECT", path, handlers...)
 }
 
 //返回服务内部的http服务入口
@@ -211,12 +240,9 @@ func (r *rider) USE(handlers ...HandlerFunc) {
 }
 
 //重写错误处理
-func (r *rider) Error(errorHandle func(c *Context, err string, code int)) {
+func (r *rider) Error(errorHandle func(c Context, err string, code int)) {
 	ErrorHandle = errorHandle
 }
-
-
-
 
 //设置模板路径（默认不缓存）
 func (r *rider) SetViews(tplDir string, extName string) {
@@ -253,13 +279,10 @@ func (r *rider) SetStatic(staticPath string) {
 		r.server.logger.FATAL(staticPath + "不是路径，静态文件路径必须为目录")
 		return
 	}
-	r.GET("/assets/(.*)", &Router{
-		Handler: func (c *Context) {
-			c.SendFile(filepath.Join(staticPath, c.PathParams()[0]))
-		},
+	r.GET("/assets/(.*)", func(c Context) {
+		c.SendFile(filepath.Join(staticPath, c.PathParams()[0]))
 	})
 }
-
 
 //引入日志模块
 func (r *rider) Logger(level int) *logger.LogQueue {

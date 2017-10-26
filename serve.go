@@ -46,7 +46,7 @@ var basePool *pool = &pool{
 	},
 	context: &sync.Pool{
 		New: func() interface{} {
-			return &Context{}
+			return &context{}
 		},
 	},
 }
@@ -54,17 +54,17 @@ var basePool *pool = &pool{
 func (h *HttpServer) NewHttpServer() *HttpServer {
 	return &HttpServer{}
 }
-var ErrorHandle func(c *Context, err string, code int)
+var ErrorHandle func(c Context, err string, code int)
 
 
-func HttpError(c *Context, err string, code int) {
+func HttpError(c Context, err string, code int) {
 	ErrorHandle(c, err, code)
 }
 
 
 //全局的错误处理，创建服务可以直接重写该方法
 func init() {
-	ErrorHandle = func(c *Context, err string, code int) {
+	ErrorHandle = func(c Context, err string, code int) {
 		errMsg := &Error{
 			StatusCode: code,
 			StatusText: http.StatusText(code),
@@ -77,7 +77,7 @@ func init() {
 			errMsg.Stack = string(debug.Stack())
 		}
 		if GlobalENV == ENV_Debug {
-			c.server.logger.DEBUG(err, "\r\n", string(debug.Stack()))
+			c.Logger().DEBUG(err, "\r\n", string(debug.Stack()))
 			errMsg.Stack = string(debug.Stack())
 		}
 		c.SendJson(code, errMsg)

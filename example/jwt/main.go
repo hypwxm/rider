@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider3.New()
 	app.Logger(8)
-	app.USE(rider.RiderJwt("rider", time.Hour))
-	app.GET("/token", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.USE(rider3.RiderJwt("rider", time.Hour))
+	app.GET("/token", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			//token, _ := c.GetLocals("token").(*rider.RiderJwter).Set("test", "test2")
 			token, _ := c.Jwt.Set("test", " test")
 			//jwt.SetTokenCookie(c)
@@ -19,8 +19,8 @@ func main() {
 			c.Send(200, []byte(token))
 		},
 	})
-	app.GET("/tokenparse", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/tokenparse", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.Logger.INFO(c.CookieValue("token"))
 			//token := c.Jwt.Jwt.TokenString
 			c.Jwt.Delete("test")

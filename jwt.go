@@ -10,14 +10,14 @@ import (
 
 type riderJwter struct {
 	jwt *jwt.Jwter
-	context *Context
+	context Context
 	expires time.Duration
 }
 
 func RiderJwt(secret string, expires time.Duration) HandlerFunc {
-	return func(c *Context) {
+	return func(c Context) {
 		rj := &riderJwter{context: c, expires: expires}
-		c.Jwt = rj
+		c.setJwt(rj)
 		if token, err := c.CookieValue("token"); err == nil {
 			//如果cookie里面存在token，验证token
 			claims, err := jwt.ValidateToken(token, secret)

@@ -181,7 +181,7 @@ func setConfigHeaders(header http.Header) {
 	}
 }
 
-func setWeakEtag(c *Context, fi *os.File, r *http.Request) bool {
+func setWeakEtag(c Context, fi *os.File, r *http.Request) bool {
 	etag, ifEqual := weakEtag(fi, r)
 	if etag != "" {
 		c.SetHeader(HeaderEtag, etag)

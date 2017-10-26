@@ -119,3 +119,16 @@ func TestSend(t *testing.T) {
 		t.Error(size)
 	}
 }
+
+func BenchmartSend(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		var mh interface{} = &myHijack{}
+		h, _ := mh.(http.Hijacker)
+		conn, buf, _ := h.Hijack()
+		hj := &HijackUp{conn: conn, bufrw: buf}
+		hj.AddHeader("test", "test")
+		hj.WriteHeader(200)
+		hj.Write([]byte("xx"))
+	}
+}

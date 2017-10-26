@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider3.New()
 	rlog := app.Logger(8)
 	//wd, _ := os.Getwd()
 	rlog.SetLogOutPath("")
@@ -23,8 +23,8 @@ func main() {
 	//rlog.AddDestination(0)
 	fmt.Println(rlog.GetDestination())
 	rlog.SetLogFileMaxSize(20 << 20)
-	app.GET("/logger", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/logger", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.SetHeader("ACCESS-CONTROL-ALLOW-ORIGIN", "*")
 			rlog.INFO("xx", "yy")
 			rlog.DEBUG("OK")
@@ -37,13 +37,13 @@ func main() {
 			})
 		},
 	})
-	app.GET("/log500", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/log500", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.Send(200, []byte("error500"))
 		},
 	})
-	app.GET("/300", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/300", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.Hijack()
 			//panic(errors.New("adad"))
 			c.Send(200, []byte("300"))
@@ -52,12 +52,12 @@ func main() {
 		},
 	})
 
-	app.GET("/panic", &rider.Router{
-		Handler: func(context *rider.Context) {
+	app.GET("/panic", &rider3.Router{
+		Handler: func(context *rider3.Context) {
 			panic(errors.New("adadad"))
 		},
 	})
-	app.GET("/ada", &rider.Router{})
+	app.GET("/ada", &rider3.Router{})
 	app.Listen(":5000")
 
 }

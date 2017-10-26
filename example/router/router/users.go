@@ -5,11 +5,11 @@ import (
 )
 
 
-func Router() *rider.Router {
-	router := rider.NewRouter()
+func Router() *rider3.Router {
+	router := rider3.NewRouter()
 
-	router.GET("/sub", &rider.Router{
-		Handler: func(c *rider.Context) {
+	router.GET("/sub", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.Send([]byte("第一层子集"))
 		},
 	})

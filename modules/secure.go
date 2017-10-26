@@ -47,22 +47,22 @@ var DefaultSecureConfig *SecureConfig = &SecureConfig{
 }
 
 
-func SecureHeader() rider.HandlerFunc {
-	return func(c *rider.Context) {
+func SecureHeader() rider3.HandlerFunc {
+	return func(c *rider3.Context) {
 		if DefaultSecureConfig.XXSSProtection != "" {
-			c.SetHeader(rider.HeaderXXSSProtection, DefaultSecureConfig.XXSSProtection)
+			c.SetHeader(rider3.HeaderXXSSProtection, DefaultSecureConfig.XXSSProtection)
 		}
 		if DefaultSecureConfig.XFrameOptions != "" {
-			c.SetHeader(rider.HeaderXFrameOptions, DefaultSecureConfig.XFrameOptions)
+			c.SetHeader(rider3.HeaderXFrameOptions, DefaultSecureConfig.XFrameOptions)
 		}
 		if DefaultSecureConfig.StrictTransportSecurity != "" {
-			c.SetHeader(rider.HeaderStrictTransportSecurity, DefaultSecureConfig.StrictTransportSecurity)
+			c.SetHeader(rider3.HeaderStrictTransportSecurity, DefaultSecureConfig.StrictTransportSecurity)
 		}
 		if DefaultSecureConfig.ContentSecurityPolicy != "" {
-			c.SetHeader(rider.HeaderContentSecurityPolicy, DefaultSecureConfig.ContentSecurityPolicy)
+			c.SetHeader(rider3.HeaderContentSecurityPolicy, DefaultSecureConfig.ContentSecurityPolicy)
 		}
 		if DefaultSecureConfig.XContentTypeOptions != "" {
-			c.SetHeader(rider.HeaderXContentTypeOptions, DefaultSecureConfig.XContentTypeOptions)
+			c.SetHeader(rider3.HeaderXContentTypeOptions, DefaultSecureConfig.XContentTypeOptions)
 		}
 		c.Next()
 	}

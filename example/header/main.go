@@ -6,9 +6,9 @@ import (
 )
 
 func main() {
-	app := rider.New()
-	app.GET("/", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app := rider3.New()
+	app.GET("/", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			//获取请求头信息
 			heades := c.Header()
 			//获取请求头字段信息，数组的第一个值

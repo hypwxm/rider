@@ -7,10 +7,10 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider3.New()
 	app.AddMiddleware(modules.SecureHeader())
-	app.GET("/secure", &rider.Router{
-		Handler: func(context *rider.Context) {
+	app.GET("/secure", &rider3.Router{
+		Handler: func(context *rider3.Context) {
 			context.Send(http.StatusOK, []byte("...."))
 		},
 	})

@@ -5,43 +5,28 @@ import (
 	"fmt"
 )
 
+func mid() rider.HandlerFunc {
+	return func(context rider.Context) {
+		fmt.Println("funcmid2")
+		context.Next()
+	}
+}
+
 func Router() *rider.Router {
 	router := rider.NewRouter()
-	router.AddMiddleware(
-		func(c *rider.Context) {
+	router.USE(
+		func(c rider.Context) {
 			fmt.Println("sub1")
 			c.Next()
 		},
 	)
-	router.GET("/subMiddle", &rider.Router{
-		Handler: func(c *rider.Context) {
-			fmt.Println("sub2")
-			c.Send([]byte("ok"))
-		},
-		Middleware: []rider.HandlerFunc{
-			func(c *rider.Context) {
-				fmt.Println("insub2")
-				c.Next()
-			},
-		},
+	router.GET("/subMiddle", func(c rider.Context) {
+		fmt.Println("sub2")
+		c.Send(200, []byte("ok"))
 	})
 
-
-	subrouter := &rider.Router{
-		Middleware: []rider.HandlerFunc{
-			func(c *rider.Context) {
-				fmt.Println("mid in mid")
-				c.Next()
-			},
-		},
-	}
-
-	router.GET("/mid", subrouter)
-	subrouter.GET("midd", &rider.Router{
-		Handler: func(c *rider.Context) {
-			fmt.Println("mide in mid in mid")
-		},
-	})
+	router.Kid("/mid", RouterSub())
+	router.Kid("/mid", mid(), RouterSub2())
 
 	return router
 }

@@ -31,12 +31,12 @@ func Gzip(level int) HandlerFunc {
 		}
 		return gz
 	}
-	return func(c *Context)  {
-		if !shouldCompress(c.request.request) {
+	return func(c Context)  {
+		if !shouldCompress(c.Request().request) {
 			c.Next()
 			return
 		}
-		res := c.response
+		res := c.Response()
 		originW := res.writer
 
 		gz := gzPool.Get().(*gzip.Writer)

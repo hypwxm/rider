@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider3.New()
 	app.Logger(8)
 	wd, _ := os.Getwd()
-	app.GET("/file", &rider.Router{
-		Handler: func(c *rider.Context) {
+	app.GET("/file", &rider3.Router{
+		Handler: func(c *rider3.Context) {
 			c.Hijack()
 			//c.Send([]byte("xx"))
 			c.SendFile(filepath.Join(wd, "src/rider/example/sendFile/9f26d8773445ac485663e91080c75877.html"))
