@@ -6,16 +6,14 @@ import (
 )
 
 func main() {
-	app := rider3.New()
+	app := rider.New()
 	app.Logger(8)
-	app.GET("/", &rider3.Router{
-		Handler: func(c *rider3.Context) {
+	app.GET("/", func(c rider.Context) {
 			go func() {
-				<- c.CloseNotify()
-				c.Logger.WARNING("http closed")
+				<- c.Response().CloseNotify()
+				c.Logger().WARNING("http closed")
 			}()
 			time.Sleep(20e9)
-		},
 	})
 	app.Listen(":5000")
 }

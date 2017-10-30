@@ -7,15 +7,13 @@ import (
 )
 
 func main() {
-	app := rider3.New()
-	app.GET("/error", &rider3.Router{
-		Handler: func(c *rider3.Context) {
+	app := rider.New()
+	app.GET("/error", func(c rider.Context) {
 			c.Next(errors.New("错误处理自定义"))
-		},
 	})
-	app.Error(func(c *rider3.Context, err string, code int) {
+	app.Error(func(c rider.Context, err string, code int) {
 		fmt.Println(err)
-		c.Send([]byte(err))
+		c.Send(200, []byte(err))
 	})
 	app.Listen(":5005")
 }

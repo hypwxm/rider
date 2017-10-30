@@ -5,12 +5,10 @@ import (
 )
 
 func main() {
-	app := rider3.New()
-	app.GET("/query", &rider3.Router{
-		Handler: func (c *rider3.Context) {
+	app := rider.New()
+	app.GET("/query", func (c rider.Context) {
 			//c.Send([]byte(c.QueryString("a")))
-			c.SendJson(c.Query())
-		},
+			c.SendJson(200, c.Query())
 	})
 	app.Listen(":5006")
 }

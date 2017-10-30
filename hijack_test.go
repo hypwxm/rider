@@ -120,7 +120,7 @@ func TestSend(t *testing.T) {
 	}
 }
 
-func BenchmartSend(b *testing.B) {
+func BenchmarkContextSend(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		var mh interface{} = &myHijack{}

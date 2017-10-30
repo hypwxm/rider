@@ -5,22 +5,17 @@ import (
 	"fmt"
 )
 
-func Router() *rider3.Router {
-	router := rider3.NewRouter()
-	router.GET("/", &rider3.Router{
-		Handler: func (c *rider3.Context) {
+func Router() *rider.Router {
+	router := rider.NewRouter()
+	router.GET("/", func (c rider.Context) {
 			fmt.Println(c.GetLocals("locals"))
 			fmt.Println(c.GetLocals("locals2"))
-			c.Send([]byte("ok"))
-		},
+			c.Send(200, []byte("ok"))
 	})
-	router.GET("/xx", &rider3.Router{
-		Handler: func (c *rider3.Context) {
+	router.GET("/xx", func (c rider.Context) {
 			fmt.Println(c.GetLocals("locals"))
 			fmt.Println(c.GetLocals("locals2"))
-
-			c.Send([]byte("ok2"))
-		},
+			c.Send(200, []byte("ok2"))
 	})
 	return router
 }

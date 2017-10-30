@@ -18,6 +18,7 @@ import (
 )
 
 var sameRouterError error = errors.New("duplicate route registration")
+var emptyRouterError error = errors.New("empty router")
 
 type routerError struct {
 	path   string
@@ -441,8 +442,8 @@ func (r *Router) addChild(path string, router ...IsRouterHandler) {
 
 //判断路由重复
 func (r *Router) duplicateRoute(method string, path string) {
-	if r.subRouter[path] != nil {
-		if r.subRouter[path][method] != nil {
+	if methodRouter, ok := r.subRouter[path]; ok {
+		if _, ok := methodRouter[method]; ok {
 			log.Println("[ERROR] ", routerError{path, method, sameRouterError}.string())
 			os.Exit(1)
 		}

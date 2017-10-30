@@ -116,3 +116,8 @@ func TestHijackSendJson(t *testing.T) {
 	wf.body = []byte{}
 }
 
+
+
+func BenchmarkSend(b *testing.B) {
+
+}
