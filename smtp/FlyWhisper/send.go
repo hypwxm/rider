@@ -6,7 +6,7 @@ import (
 	"net/textproto"
 	"bytes"
 	"errors"
-	"rider/cryptos"
+	"github.com/hypwxm/rider/cryptos"
 	"path/filepath"
 	"io/ioutil"
 	"encoding/base64"

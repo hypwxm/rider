@@ -9,7 +9,7 @@ import (
 	"strings"
 	"container/list"
 	"regexp"
-	"rider/logger"
+	"github.com/hypwxm/rider/logger"
 	"time"
 	"runtime/debug"
 	"errors"

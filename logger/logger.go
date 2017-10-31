@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 	"runtime/debug"
-	"rider/riderFile"
+	"github.com/hypwxm/rider/riderFile"
 	"github.com/hypwxm/rider/smtp/FlyWhisper"
 )
 
