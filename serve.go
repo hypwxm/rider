@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sync"
 	"runtime/debug"
-	"rider/logger"
+	"github.com/hypwxm/rider/logger"
 )
 
 type HttpServer struct {

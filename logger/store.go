@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 	"strings"
-	"rider/riderFile"
+	"github.com/hypwxm/rider/riderFile"
 	"time"
 	"fmt"
 	"path/filepath"
