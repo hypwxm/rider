@@ -44,7 +44,7 @@ app.GET("/path", func(c rider.Context), func(c rider.Context), ...)
 app := rider.New()
 app.Kid("/path", func(c rider.Context), func(c rider.Context), func(c rider.Context), *rider.Router{})
 ```
-## 接口
+## 6: 接口
 
 ```go
 	//获取Response响应体内容
@@ -224,7 +224,7 @@ app.Kid("/path", func(c rider.Context), func(c rider.Context), func(c rider.Cont
 	//负责模板渲染 ，只要实现了BaseRender，注册app服务是直接修改tplsRender的值
 	Render(tplName string, data interface{})
 ```
-## 上下文变量
+## 7: 上下文变量
 * [locals](https://github.com/hypwxm/rider/tree/master/example/locals)
 *  main.go
 ```go
@@ -256,7 +256,7 @@ func Router() *rider.Router {
 	return router
 }
 ```
-## 下载模块
+## 8: 下载模块
 * [download](https://github.com/hypwxm/rider/tree/master/example/download)
 ```go c.Download(filename, name, type) ```
 * @params
@@ -268,7 +268,7 @@ app.GET("/download", func(c rider.Context) {
 	c.Download(filename, name, type)
 })
 ```
-## jwt模块（可取代cookie），比cookie要安全
+## 9: jwt模块（可取代cookie），比cookie要安全
 * [jwt](https://github.com/hypwxm/rider/tree/master/example/jwt)
 * 作为中间件引入
 ```go
@@ -288,7 +288,7 @@ app.GET("/tokenparse", func(c rider.Context) {
 })
 app.Listen(":5002")
 ```
-## logger日志模块
+## 10: logger日志模块
 * [logger](https://github.com/hypwxm/rider/tree/master/example/logger)
 * 注册服务后，日志模块会一同注册。
 * 通过smtp服务可以注册邮箱日志
@@ -328,5 +328,5 @@ app.Listen(":5002")
 app := rider.New()
 rlog := app.Logger(8)
 ```
-## smtp邮箱模块
+## 11: smtp邮箱模块
 * [smtp](https://github.com/hypwxm/rider/tree/master/example/smtp)
