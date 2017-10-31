@@ -17,7 +17,7 @@ import (
 	"time"
 	"os"
 	"path/filepath"
-	"rider/logger"
+	"github.com/hypwxm/rider/logger"
 )
 
 const (

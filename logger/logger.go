@@ -12,7 +12,7 @@ import (
 	"sync"
 	"runtime/debug"
 	"rider/riderFile"
-	"rider/smtp/FlyWhisper"
+	"github.com/hypwxm/rider/smtp/FlyWhisper"
 )
 
 const (
