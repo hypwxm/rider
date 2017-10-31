@@ -7,7 +7,7 @@ import (
 	ctxt "context"
 	"net/url"
 	"os"
-	"rider/logger"
+	"github.com/hypwxm/rider/logger"
 	"strings"
 	"encoding/json"
 )

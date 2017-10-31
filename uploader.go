@@ -6,7 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"errors"
-	"rider/riderFile"
+	"github.com/hypwxm/rider/riderFile"
 	"strings"
 )
 
