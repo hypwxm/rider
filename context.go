@@ -564,7 +564,7 @@ func (c *context) SendJson(code int, data interface{}) (int, error) {
 	if err != nil {
 		panic(err)
 	}
-	c.SetCType("application/json")
+	c.SetCType("application/json; charset=utf8")
 	return c.Send(code, jsonData)
 }
 
