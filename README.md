@@ -226,7 +226,7 @@ app.Kid("/path", func(c rider.Context), func(c rider.Context), func(c rider.Cont
 ```
 ## 上下文变量
 * [locals](https://github.com/hypwxm/rider/tree/master/example/locals)
-###  main.go
+*  main.go
 ```go
 app := rider.New()
 app.USE(
@@ -239,7 +239,7 @@ app.USE(
 app.Kid("/", router.Router())
 app.Listen(":5003")
 ```
-###  child.go
+*  child.go
 ```go
 func Router() *rider.Router {
 	router := rider.NewRouter()
@@ -258,11 +258,11 @@ func Router() *rider.Router {
 ```
 ## 下载模块
 * [download](https://github.com/hypwxm/rider/tree/master/example/download)
-c.Download(filename, name, type)
-### params
-** 1: filename: 文件所在路径加全名
-** 2: name: 指定下载时文件的名称，不指定默认取路径中的名称
-** 3: type: 下载文件的方式，attachment和inline。
+```go c.Download(filename, name, type) ```
+* @params
+* 1: filename: 文件所在路径加全名
+* 2: name: 指定下载时文件的名称，不指定默认取路径中的名称
+* 3: type: 下载文件的方式，attachment和inline。
 ```go
 app.GET("/download", func(c rider.Context) {
 	c.Download(filename, name, type)
