@@ -13,6 +13,7 @@ func main() {
 	wd, _ := os.Getwd()
 	app.USE(rider.Gzip(-1))
 	app.SetStatic(filepath.Join(wd, "src/rider/example/setStatic/public"))
+	//http://localhost:5001/assets/xx.js
 	app.GET("/xxx", func(c rider.Context) {
 			//time.Sleep(15e9)
 			//c.Redirect(307, "https://www.baidu.com")
