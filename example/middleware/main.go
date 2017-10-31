@@ -21,7 +21,7 @@ func main() {
 			c.Next()
 		},
 	)
-	app.GET("/middle", func(c rider.Context) {
+	app.GET("/middle", mid(), func(c rider.Context) {
 		fmt.Println("2")
 		c.Send(200, []byte("ok"))
 	})

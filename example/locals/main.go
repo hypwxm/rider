@@ -15,6 +15,6 @@ func main() {
 			c.Next()
 		},
 	)
-	app.GET("/", router.Router())
+	app.Kid("/", router.Router())
 	app.Listen(":5003")
 }

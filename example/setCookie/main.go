@@ -6,9 +6,8 @@ import (
 )
 
 func main() {
-	app := rider3.New()
-	app.GET("/setCookie", &rider3.Router{
-		Handler: func(c *rider3.Context) {
+	app := rider.New()
+	app.GET("/setCookie", func(c rider.Context) {
 			//设置cookie
 			c.SetCookie(http.Cookie{
 				Name: "cookie",
@@ -17,22 +16,17 @@ func main() {
 				Path: "/",  //默认为 "/"
 			})
 
-			c.Send([]byte("ok"))
-		},
+			c.Send(200, []byte("ok"))
 	})
-	app.GET("/getCookie", &rider3.Router{
-		Handler: func(c *rider3.Context) {
+	app.GET("/getCookie", func(c rider.Context) {
 			cookie, _ := c.CookieValue("cookie")
 			//cookies := c.Cookies()
-			c.Send([]byte(cookie))
-		},
+			c.Send(200, []byte(cookie))
 	})
-	app.GET("/removeCookie", &rider3.Router{
-		Handler: func(c *rider3.Context) {
+	app.GET("/removeCookie", func(c rider.Context) {
 			//删除cookie
-			c.RemoveCookie("cookie")
-			c.Send([]byte("ok"))
-		},
+			c.DeleteCookie("cookie")
+			c.Send(200, []byte("ok"))
 	})
 	app.Listen(":5003")
 }
