@@ -2,7 +2,7 @@
 A lightweight http framework, custom infinite pole routing
 
 ## 下载
-* go get https://github.com/hypwxm/rider
+* go get github.com/hypwxm/rider
 
 ### 1: 创建服务
 ```go
