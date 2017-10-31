@@ -1,7 +1,7 @@
 package rider
 
 import (
-	"rider/jwt"
+	"github.com/hypwxm/rider/jwt"
 	"time"
 	"net/http"
 	jwtgo "github.com/dgrijalva/jwt-go"

@@ -5,7 +5,7 @@ import (
 	"os"
 	"html/template"
 	"fmt"
-	"rider/riderFile"
+	"github.com/hypwxm/rider/riderFile"
 	"io"
 	"errors"
 	"path/filepath"
