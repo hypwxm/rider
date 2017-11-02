@@ -1,0 +1,43 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "GXOurDGgsLmJs0wounpdWZZRSGw=",
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": "a539ee1a749a2b895533f979515ac7e6e0f5b650",
+			"revisionTime": "2017-06-08T00:51:49Z"
+		},
+		{
+			"checksumSHA1": "KbSgdS27mgDh0mXysfc+Loqh8cw=",
+			"path": "github.com/hypwxm/rider/cryptos",
+			"revision": "188e354131ac358210ac034d58988b2291a0cbfa",
+			"revisionTime": "2017-10-31T09:42:02Z"
+		},
+		{
+			"checksumSHA1": "3PoVyEp2frepQB82bT7h8rKEVrw=",
+			"path": "github.com/hypwxm/rider/jwt",
+			"revision": "188e354131ac358210ac034d58988b2291a0cbfa",
+			"revisionTime": "2017-10-31T09:42:02Z"
+		},
+		{
+			"checksumSHA1": "BCAsaSNaEeFdR1JyPm/38nGKxcI=",
+			"path": "github.com/hypwxm/rider/logger",
+			"revision": "188e354131ac358210ac034d58988b2291a0cbfa",
+			"revisionTime": "2017-10-31T09:42:02Z"
+		},
+		{
+			"checksumSHA1": "g9H+bgAozb4nBgCl5Np2gYeXGvM=",
+			"path": "github.com/hypwxm/rider/riderFile",
+			"revision": "188e354131ac358210ac034d58988b2291a0cbfa",
+			"revisionTime": "2017-10-31T09:42:02Z"
+		},
+		{
+			"checksumSHA1": "d8dmQ90XvhvanSP/zBG4hc4OjWk=",
+			"path": "github.com/hypwxm/rider/smtp/FlyWhisper",
+			"revision": "188e354131ac358210ac034d58988b2291a0cbfa",
+			"revisionTime": "2017-10-31T09:42:02Z"
+		}
+	],
+	"rootPath": "rider"
+}

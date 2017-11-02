@@ -4,11 +4,17 @@ import (
 	"rider"
 )
 
+
 func main() {
 	app := rider.New()
+	app.Logger(8)
 	app.GET("/query", func (c rider.Context) {
 			//c.Send([]byte(c.QueryString("a")))
+			//time.Sleep(20e9)
+			c.Logger().INFO("xxx")
 			c.SendJson(200, c.Query())
 	})
-	app.Listen(":5006")
+
+
+	app.Graceful(":5006")
 }

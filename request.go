@@ -73,6 +73,11 @@ func (req *Request) Query() url.Values {
 	return req.request.URL.Query()
 }
 
+//获取完整uri
+func (req *Request) RequestURI() string {
+	return req.request.RequestURI
+}
+
 /*
 * 获取原始查询字符串
  */

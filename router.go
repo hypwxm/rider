@@ -157,7 +157,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		//记录http请求耗时
 		routerEnd := time.Now()
 		routerDuration := routerEnd.Sub(routerStart)
-		logger.HttpLogger(r.GetServer().logger, ctx.Method(), ctx.Path(), statusCode, routerDuration, ctx.RequestID())
+		logger.HttpLogger(r.GetServer().logger, ctx.Method(), ctx.Request().RequestURI(), statusCode, routerDuration, ctx.RequestID())
 		releaseContext(ctx)
 	}()
 

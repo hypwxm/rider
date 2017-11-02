@@ -18,11 +18,14 @@ import (
 	"os"
 	"path/filepath"
 	"github.com/hypwxm/rider/logger"
+	ctxt "context"
+	"os/signal"
+	"syscall"
 )
 
 const (
 	addr                    = ":8000"
-	readTimeout             = 30 * time.Second
+	readTimeout             = 10 * time.Second
 	writerTimeout           = 60 * time.Second
 	maxHeaderBytes          = 1 << 20 //1MB
 	defaultMultipartBodySze = 32 << 20
@@ -56,6 +59,7 @@ type baseRider interface {
 type rider struct {
 	server  *HttpServer //注册服务用的serveMu，全局统一
 	routers *Router
+	appServer *http.Server
 }
 
 //设置环境
@@ -81,6 +85,7 @@ func SetEnvDebug() {
 	SetEnvMode("debug")
 }
 
+
 //初始化服务入口组建
 func New() *rider {
 	server := newHttpServer()
@@ -88,6 +93,7 @@ func New() *rider {
 		server:  server,
 		routers: newRootRouter(server),
 	}
+	app.appServer = &http.Server{Handler: app.routers}
 	//默认日志等级5 consoleLevel
 	//日志会默认初始化，调用app.Logger(int)可以改变日志的输出等级
 	app.server.logger = logger.NewLogger()
@@ -104,24 +110,46 @@ func newRootRouter(server *HttpServer) *Router {
 	return _router
 }
 
+
+
+
 //提供端口监听服务，监听rider里面的serveMux,调用http自带的服务启用方法
-func (r *rider) Listen(port string) {
+func (r *rider) Listen(port string) (err error) {
 	if port == "" {
 		port = addr
 	}
-	server := &http.Server{
-		Addr:           port,
-		Handler:        r.routers,
-		ReadTimeout:    readTimeout,
-		WriteTimeout:   writerTimeout,
-		MaxHeaderBytes: maxHeaderBytes,
-	}
 
-	err := server.ListenAndServe()
+	r.appServer.Addr = port
+	r.appServer.ReadTimeout = readTimeout
+	r.appServer.WriteTimeout = writerTimeout
+	r.appServer.MaxHeaderBytes = maxHeaderBytes
+	err = r.appServer.ListenAndServe()
 	if err != nil {
-		r.server.logger.FATAL(err.Error())
+		r.server.logger.ERROR(err.Error())
 	}
+	return
 }
+
+
+func (r *rider) Graceful(port string) {
+	ch := make(chan os.Signal)
+	var err error
+	go func() {
+		err = r.Listen(port)
+		if err != nil {
+			ch <- syscall.SIGINT
+		}
+	}()
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	<-ch
+	r.appServer.Shutdown(ctxt.Background())
+	time.Sleep(300 * time.Microsecond)
+}
+
+func (r *rider) Routers() *Router {
+	return r.routers
+}
+
 
 //http请求的方法的入口（ANY, GET, POST...VIA）
 //path：一个跟路径，函数内部根据这个根路径创建一个根路由routers，用来管理router子路由
