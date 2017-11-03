@@ -52,7 +52,7 @@ func logCaller(lc *logCon) (*logCon, error) {
 		for skip := 0; ; skip++ {
 			pc, file, line, ok := runtime.Caller(skip)
 			if !ok {
-				return lc, errors.New("error when call runtime.Caller")
+				return lc, nil
 			}
 			funcInfo := runtime.FuncForPC(pc)
 			if funcInfo == nil {

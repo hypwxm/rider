@@ -1,0 +1,2 @@
+[INFO]  2017-11-03 11:53:00 xx yy 
+[HTTP]  GET /logger 200 4.463486324s => [ 7d70be551ea15b8cdc6aeef55619e650 ]
