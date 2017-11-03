@@ -1,8 +1,0 @@
-[HTTP]  GET / 404 246.569µs => [ 037cbed3a29511e8600f40d87b166d20 ]
-[HTTP]  GET /newView 404 165.277µs => [ 9c28b0eed43556542aee38bfa84be5b8 ]
-[HTTP]  GET /newView 404 354.194µs => [ 492c17bf674e4e1a4df67f60065ad9e4 ]
-[HTTP]  GET /newView 404 136.187µs => [ 09334772a6ed846ffda5a9ff71bd372e ]
-[HTTP]  GET /newView 404 155.561µs => [ f64fd4111afb5005889f47f8bdad9b78 ]
-[HTTP]  GET /newView 404 148.304µs => [ f02a3daf7c23191fc510b595689e01cb ]
-[HTTP]  GET /newView 404 136.842µs => [ 278a932439c882f1622ca4a0ef9c0831 ]
-[HTTP]  GET /newView 404 201.497µs => [ 6fc189afdb544ee265b1f01a94ca98a2 ]
