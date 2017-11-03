@@ -1,0 +1,6 @@
+[INFO]  2017-11-03 11:00:51 xx yy 
+[DEBUG]  ---
+ 2017-11-03 11:00:51 OK 
+main.go line:29 path:/Users/hyp/Desktop/WORKER/go/src/rider/example/logger/main.go func:main.main.func1
+--- 
+[HTTP]  GET /logger 200 3.89603287s => [ 0315c51e75bd12eb2b8a252c613db706 ]
