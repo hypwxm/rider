@@ -3,16 +3,16 @@ package logger
 import (
 	"log"
 	"os"
-	"path/filepath"
 	"runtime"
 	"errors"
-	"strconv"
 	"time"
 	"fmt"
 	"sync"
 	"runtime/debug"
 	"github.com/hypwxm/rider/riderFile"
 	"github.com/hypwxm/rider/smtp/FlyWhisper"
+	"path/filepath"
+	"strconv"
 )
 
 const (
@@ -34,11 +34,11 @@ type logOrigin struct {
 }
 
 type logCon struct {
-	Message []interface{}
-	MessageStr string
+	Message         []interface{}
+	MessageStr      string
 	ColorMessageStr string
-	level   uint8
-	origin  *logOrigin
+	level           uint8
+	origin          []*logOrigin
 }
 
 func NewLogCon(message ...interface{}) *logCon {
@@ -49,21 +49,23 @@ func NewLogCon(message ...interface{}) *logCon {
 
 func logCaller(lc *logCon) (*logCon, error) {
 	if lc.level == debugLevel {
-		pc, file, line, ok := runtime.Caller(2)
-		if !ok {
-			return nil, errors.New("error when call runtime.Caller")
+		for skip := 0; ; skip++ {
+			pc, file, line, ok := runtime.Caller(skip)
+			if !ok {
+				return lc, errors.New("error when call runtime.Caller")
+			}
+			funcInfo := runtime.FuncForPC(pc)
+			if funcInfo == nil {
+				return lc, errors.New("error when call runtime.FuncForPC")
+			}
+			lgn := &logOrigin{
+				fileName: filepath.Base(file),
+				line:     strconv.Itoa(line),
+				fullPath: file,
+				funcName: funcInfo.Name(),
+			}
+			lc.origin = append(lc.origin, lgn)
 		}
-		funcInfo := runtime.FuncForPC(pc)
-		if funcInfo == nil {
-			return nil, errors.New("error when call runtime.FuncForPC")
-		}
-		lgn := &logOrigin{
-			fileName: filepath.Base(file),
-			line:     strconv.Itoa(line),
-			fullPath: file,
-			funcName: funcInfo.Name(),
-		}
-		lc.origin = lgn
 	}
 	return lc, nil
 }
@@ -90,12 +92,12 @@ func (lc *logCon) String() string {
 
 //添加日志队列
 type LogQueue struct {
-	loggers          chan *logCon
-	level            uint8
-	mux              *sync.Mutex
-	logOutWay        []int   //[0]表示默认终端，[1]表示输出到文件，[2]输出到邮件； [0 1]表示双输出
+	loggers   chan *logCon
+	level     uint8
+	mux       *sync.Mutex
+	logOutWay []int //[0]表示默认终端，[1]表示输出到文件，[2]输出到邮件； [0 1]表示双输出
 
-	stdout           *log.Logger //默认的终端输出(不区分级别)
+	stdout *log.Logger //默认的终端输出(不区分级别)
 
 	//文件日志
 	logWriter        *log.Logger
@@ -122,7 +124,7 @@ func (lq *LogQueue) SetDestination(dest ...int) {
 
 //添加输出位置
 func (lq *LogQueue) AddDestination(dest ...int) {
-	alldest:
+alldest:
 	for _, dest := range dest {
 		for _, way := range lq.logOutWay {
 			if way == dest {
@@ -138,7 +140,7 @@ func (lq *LogQueue) RemoveDest(key int) {
 	lenway := len(lq.logOutWay)
 	for k, v := range lq.logOutWay {
 		if v == key {
-			if k == lenway - 1 {
+			if k == lenway-1 {
 				lq.logOutWay = lq.logOutWay[:k]
 			} else {
 				lq.logOutWay = append(lq.logOutWay[:k], lq.logOutWay[k+1:]...)
@@ -154,7 +156,7 @@ func (lq *LogQueue) GetDestination() []int {
 }
 
 //判断某一输出状态是否存在
-func(lq *LogQueue) DestExist(key int) bool {
+func (lq *LogQueue) DestExist(key int) bool {
 	for _, v := range lq.logOutWay {
 		if v == key {
 			return true
@@ -222,7 +224,10 @@ func (lq *LogQueue) DEBUG(message ...interface{}) (*logCon, error) {
 			log.Println("error when debugLevel called in runtime")
 			return nil, err
 		}
-		originMess := "\r\n" + lc.origin.fileName + " line:" + lc.origin.line + " path:" + lc.origin.fullPath + " func:" + lc.origin.funcName + "\r\n---"
+		originMess := ""
+		for _, o := range lc.origin {
+			originMess += "\r\n" + o.fileName + " line:" + o.line + " path:" + o.fullPath + " func:" + o.funcName + "\r\n---"
+		}
 		lc.Message = append(lc.Message, originMess)
 		for _, mess := range lc.Message {
 			lc.ColorMessageStr += BlueBoldText(mess) + " "
@@ -323,6 +328,7 @@ func NewLogger() *LogQueue {
 		mux:            new(sync.Mutex),
 		maxLogFileSize: 20 << 20, //20MB
 	}
+	//设置默认只输出到os.Stdout
 	logger.SetDestination(0)
 	logger.stdout = log.New(os.Stdout, "", 0)
 	go logger.DoLogQueue()

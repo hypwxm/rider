@@ -8,7 +8,6 @@ import (
 )
 
 type HttpServer struct {
-	ServerMux *http.ServeMux
 	tplDir string
 	tplExtName string
 	tplsRender BaseRender
@@ -27,7 +26,6 @@ type pool struct {
 
 func newHttpServer() *HttpServer {
 	return &HttpServer{
-		ServerMux: http.NewServeMux(),
 		tplsRender: newRender(),
 	}
 }

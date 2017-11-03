@@ -49,7 +49,7 @@ func main() {
 	app.GET("/panic", func(context rider.Context) {
 			panic(errors.New("adadad"))
 	})
-	app.Kid("/ada", &rider.Router{})
+	//app.Kid("/ada", &rider.Router{})
 	app.Listen(":5000")
 
 }
