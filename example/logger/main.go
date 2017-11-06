@@ -12,6 +12,8 @@ func main() {
 	rlog := app.Logger(8)
 	//wd, _ := os.Getwd()
 	rlog.SetLogOutPath("")
+
+	//配置邮件日志，配置的是发送者
 	rlog.SmtpLogger(
 		"postmaster@seemrice.com",
 		"Hyp2Wxm2Hxy",
@@ -19,18 +21,23 @@ func main() {
 		"25",
 		"postmaster@seemrice.com",
 	)
+	app.USE(rider.Gzip(-1))
+
 	//rlog.SetDestination(1)
 	//rlog.AddDestination(0)
+	//rlog.RemoveDestination(0)
 	fmt.Println(rlog.GetDestination())
 	rlog.SetLogFileMaxSize(20 << 20)
 	app.GET("/logger", func(c rider.Context) {
 			c.SetHeader("ACCESS-CONTROL-ALLOW-ORIGIN", "*")
-			rlog.INFO("xx", "yy")
+			rlog.INFO("xx", "yy", c.RequestID())
 			rlog.DEBUG("OK")
 			//rlog.PANIC("adad")
-			mess := FlyWhisper.NewMessage("logger send", []string{"1825909531@qq.com"})
-			mess.AddHtml("<p>this is a mail logger</p>")
-			c.Logger().SendMail(mess)
+			go func() {
+				mess := FlyWhisper.NewMessage("logger send", []string{"1825909531@qq.com"})
+				mess.AddHtml("<p>this is a mail logger</p>")
+				c.Logger().SendMail(mess)
+			}()
 			c.SendJson(200, map[string]string{
 				"a": "1",
 			})

@@ -1,5 +1,11 @@
 package logger
 
+/*
+	邮件日志
+	SmtpLogger配置发送者信息
+	SendMail在*FlyWhisper.Message中定义发送的内容，接受者等，发送出去
+*/
+
 import (
 	"github.com/hypwxm/rider/smtp/FlyWhisper"
 	"errors"

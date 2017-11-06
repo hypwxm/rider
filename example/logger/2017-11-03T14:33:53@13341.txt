@@ -1,0 +1,28 @@
+[INFO]  2017-11-03 14:33:56 xx yy 
+[DEBUG]  ---
+ 2017-11-03 14:33:56 OK 
+logger.go line:53 path:/Users/hyp/Desktop/worker/go/src/github.com/hypwxm/rider/logger/logger.go func:github.com/hypwxm/rider/logger.logCaller
+---
+logger.go line:222 path:/Users/hyp/Desktop/worker/go/src/github.com/hypwxm/rider/logger/logger.go func:github.com/hypwxm/rider/logger.(*LogQueue).DEBUG
+---
+main.go line:31 path:/Users/hyp/Desktop/WORKER/go/src/rider/example/logger/main.go func:main.main.func1
+---
+context.go line:278 path:/Users/hyp/Desktop/WORKER/go/src/rider/context.go func:rider.(*context).Next
+---
+gzip.go line:62 path:/Users/hyp/Desktop/WORKER/go/src/rider/gzip.go func:rider.Gzip.func2
+---
+context.go line:332 path:/Users/hyp/Desktop/WORKER/go/src/rider/context.go func:rider.(*context).startHandleList
+---
+router.go line:225 path:/Users/hyp/Desktop/WORKER/go/src/rider/router.go func:rider.(*Router).doHandlers
+---
+router.go line:200 path:/Users/hyp/Desktop/WORKER/go/src/rider/router.go func:rider.handlerRouter.riderServeHTTP
+---
+router.go line:165 path:/Users/hyp/Desktop/WORKER/go/src/rider/router.go func:rider.(*Router).ServeHTTP
+---
+server.go line:2568 path:/usr/local/go/src/net/http/server.go func:net/http.serverHandler.ServeHTTP
+---
+server.go line:1825 path:/usr/local/go/src/net/http/server.go func:net/http.(*conn).serve
+---
+asm_amd64.s line:2197 path:/usr/local/go/src/runtime/asm_amd64.s func:runtime.goexit
+--- 
+[HTTP]  GET /logger 304 209.736087ms => [ 0dd84c9f128d3e8198be6f1fc8704348 ]

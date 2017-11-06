@@ -7,8 +7,6 @@ import (
 	"net/textproto"
 	"strings"
 	"crypto/md5"
-	"os"
-	"io/ioutil"
 	"encoding/hex"
 )
 
@@ -128,12 +126,8 @@ func (r *Response) SetCookie(cookie http.Cookie) {
 }
 
 //验证weaketag 无论更新否都会返回etag，如果没更新，返回的etag和传入的是一样的，bool为true响应304
-func weakEtag(fi *os.File, r *http.Request) (string, bool) {
+func weakEtag(chunk []byte, r *http.Request) (string, bool) {
 	if !DefaultConfig.EnableWeakEtag {
-		return "", false
-	}
-	chunk, err := ioutil.ReadAll(fi)
-	if err != nil {
 		return "", false
 	}
 	md5Chunk := md5.New()
@@ -181,8 +175,8 @@ func setConfigHeaders(header http.Header) {
 	}
 }
 
-func setWeakEtag(c Context, fi *os.File, r *http.Request) bool {
-	etag, ifEqual := weakEtag(fi, r)
+func setWeakEtag(c Context, b []byte, r *http.Request) bool {
+	etag, ifEqual := weakEtag(b, r)
 	if etag != "" {
 		c.SetHeader(HeaderEtag, etag)
 		if ifEqual {

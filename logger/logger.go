@@ -136,7 +136,7 @@ alldest:
 }
 
 //移除某一输出
-func (lq *LogQueue) RemoveDest(key int) {
+func (lq *LogQueue) RemoveDestination(key int) {
 	lenway := len(lq.logOutWay)
 	for k, v := range lq.logOutWay {
 		if v == key {

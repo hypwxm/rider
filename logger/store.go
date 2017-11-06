@@ -71,13 +71,13 @@ func (lq *LogQueue) SetLogOutPath(filename string) error {
 	lq.logOutPath = filename
 	lf, err := createLogFile(filename)
 	if err != nil {
-		lq.RemoveDest(1)
+		lq.RemoveDestination(1)
 		lq.PANIC(err)
 		return err
 	}
 	elf, err := createErrLogFile(filename)
 	if err != nil {
-		lq.RemoveDest(1)
+		lq.RemoveDestination(1)
 		lf.Close()
 		lq.PANIC(err)
 		return err

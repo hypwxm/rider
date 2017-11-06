@@ -10,6 +10,7 @@ import (
 	"github.com/hypwxm/rider/logger"
 	"strings"
 	"encoding/json"
+	"io/ioutil"
 )
 
 type Context interface {
@@ -550,7 +551,15 @@ func (c *context) Send(code int, data []byte) (size int, err error) {
 		c.SetHeader(HeaderContentType, http.DetectContentType(data))
 	}
 
+	if code == 200 || code == 304 {
+		if setWeakEtag(c, data, c.Request().request) {
+			c.Send(304, []byte(""))
+			return 0, nil
+		}
+	}
+	
 	c.writeHeader(code)
+
 	if c.isHijack {
 		return c.hijacker.Write(data)
 	} else {
@@ -641,7 +650,10 @@ func (c *context) SendFile(path string) error {
 	}
 
 	c.response.Size = fi.Size()
-	if setWeakEtag(c, fp, c.request.request) {
+
+	chunk, err := ioutil.ReadAll(fp)
+
+	if setWeakEtag(c, chunk, c.request.request) {
 		c.Send(304, []byte(""))
 		return nil
 	}
