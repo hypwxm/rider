@@ -3,7 +3,7 @@ package logger
 import (
 	"testing"
 	"time"
-	"rider/riderFile"
+	"rider/utils"
 )
 
 func TestNewLogger(t *testing.T) {
@@ -13,7 +13,7 @@ func TestNewLogger(t *testing.T) {
 	if len(logger.GetDestination()) != 1 || logger.GetDestination()[0] != 0 {
 		t.Error("SetDestination error")
 	}
-	dir, _ := riderFile.GetDirName(2)
+	dir, _ := utils.GetDirName(2)
 	t.Logf("%s", dir)
 	logger.SetLogOutPath(dir)
 	//logger.AddDestination(1)

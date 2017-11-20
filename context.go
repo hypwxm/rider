@@ -165,6 +165,9 @@ type Context interface {
 	//给客户端发送数据
 	Send(code int, d []byte) (int, error)
 
+	//发送字符串
+	SendString(code int, s string) (int, error)
+
 	//给客户端发送json格式的数据
 	SendJson(code int, i interface{}) (int, error)
 
@@ -557,7 +560,7 @@ func (c *context) Send(code int, data []byte) (size int, err error) {
 			return 0, nil
 		}
 	}
-	
+
 	c.writeHeader(code)
 
 	if c.isHijack {
@@ -565,6 +568,10 @@ func (c *context) Send(code int, data []byte) (size int, err error) {
 	} else {
 		return c.response.Write(data)
 	}
+}
+
+func (c *context) SendString(code int, s string) (int, error) {
+	return c.Send(code, []byte(s))
 }
 
 //发送json格式数据给客户端
