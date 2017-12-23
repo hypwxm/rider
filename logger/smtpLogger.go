@@ -7,7 +7,7 @@ package logger
 */
 
 import (
-	"github.com/hypwxm/rider/smtp/FlyWhisper"
+	"rider/smtp/FlyWhisper"
 	"errors"
 )
 

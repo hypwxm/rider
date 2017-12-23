@@ -3,7 +3,7 @@ package main
 import (
 	"rider"
 	"fmt"
-	"github.com/hypwxm/rider/smtp/FlyWhisper"
+	"rider/smtp/FlyWhisper"
 	"errors"
 )
 

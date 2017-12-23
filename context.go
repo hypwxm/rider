@@ -1,24 +1,29 @@
 package rider
 
 import (
-	"net/http"
 	"container/list"
-	"errors"
 	ctxt "context"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
-	"github.com/hypwxm/rider/logger"
+	"rider/logger"
 	"strings"
-	"encoding/json"
-	"io/ioutil"
 )
+
+type NError struct {
+	Status int
+	Error  string
+}
 
 type Context interface {
 	//设置context的任务函数处理队列（包含中间件）
 	handlerQueue(list *list.List)
 
 	//实现中间件的链表处理
-	Next(err ...error) error
+	Next(err ...NError) error
 
 	//设置链表中当前在处理处理器
 	setCurrent(element *list.Element)
@@ -40,13 +45,12 @@ type Context interface {
 
 	//获取Response响应体内容
 	Response() *Response
-	
+
 	//获取请求体部分
 	Request() *Request
 
 	//获取app初始化时注册的logger服务，用于生成日志
 	Logger() *logger.LogQueue
-
 
 	//###获取请求相关的数据，
 	//给context传递变量，该变量在整个请求的传递中一直有效（中间件传递）
@@ -54,6 +58,8 @@ type Context interface {
 
 	//通过SetLocals设置的值可以在整个响应处理环节通过GetLocals获取
 	GetLocals(key string) interface{}
+
+	Locals() map[string]interface{} //获取SetLocals设置的所有变量，用户输出给模板
 
 	//只获取请求url中的查询字符串querystring的map[]string值
 	Query() url.Values
@@ -118,7 +124,6 @@ type Context interface {
 	//获取请求体中某一字段的cookie值
 	CookieValue(key string) (string, error)
 
-
 	//##响应相关
 	//获取响应的状态码
 	Status() int
@@ -181,20 +186,22 @@ var (
 
 // "##"表示从pool取得context时必须初始化的值
 type context struct {
-	request             *Request        //##
-	response            *Response       //##
-	handlerList         *list.List      //##
-	currentHandler      *list.Element   //##
-	ctx                 ctxt.Context    //##标准包的context
-	cancel              ctxt.CancelFunc //##
-	isHijack            bool            //##
-	hijacker            *HijackUp       //##
-	isEnd               bool            //##
-	done                chan int        //##
-	server              *HttpServer     //整个服务引用的server都是同一个
-	ended               chan int        //##
-	committed           bool            //##表示状态码是否已经发送（writeHeader有无调用）
-	jwt                 *riderJwter //用于存储jwt
+	request        *Request               //##
+	response       *Response              //##
+	handlerList    *list.List             //##
+	currentHandler *list.Element          //##
+	ctx            ctxt.Context           //##标准包的context
+	cancel         ctxt.CancelFunc        //##
+	isHijack       bool                   //##
+	hijacker       *HijackUp              //##
+	isEnd          bool                   //##
+	done           chan int               //##
+	server         *HttpServer            //整个服务引用的server都是同一个
+	ended          chan int               //##
+	committed      bool                   //##表示状态码是否已经发送（writeHeader有无调用）
+	jwt            *riderJwter            //用于存储jwt
+	locals         map[string]interface{} //用户存储locals的变量，用户输出给模板时调用
+
 }
 
 func newContext(w http.ResponseWriter, r *http.Request, server *HttpServer) Context {
@@ -234,6 +241,7 @@ func (c *context) reset(w *Response, r *Request, server *HttpServer) *context {
 	c.server = server
 	c.committed = false
 	c.jwt = nil
+	c.locals = make(map[string]interface{})
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
 	//go c.timeout()
 	return c
@@ -254,18 +262,22 @@ func (c *context) release() {
 	c.hijacker = nil
 	c.jwt = nil
 	c.committed = false
+	c.locals = nil
 }
 
-
 //处理下一个中间件
-func (c *context) Next(err ...error) error {
+func (c *context) Next(err ...NError) error {
 	if c.currentHandler == nil {
 		//未知错误
 		return errors.New("unknown error of nil handler")
 	}
 
-	if len(err) > 0 && err[0] != nil {
-		HttpError(c, err[0].Error(), http.StatusInternalServerError)
+	if len(err) > 0 {
+		status := http.StatusInternalServerError
+		if err[0].Status != 0 {
+			status = err[0].Status
+		}
+		HttpError(c, err[0].Error, status)
 		return nil
 	}
 
@@ -281,7 +293,6 @@ func (c *context) Next(err ...error) error {
 	next.Value.(HandlerFunc)(c)
 	return nil
 }
-
 
 func (c *context) Request() *Request {
 	return c.request
@@ -302,7 +313,6 @@ func (c *context) Logger() *logger.LogQueue {
 func (c *context) handlerQueue(l *list.List) {
 	c.handlerList = l
 }
-
 
 //设置链表中当前在处理处理器
 func (c *context) setCurrent(e *list.Element) {
@@ -339,11 +349,17 @@ func (c *context) startHandleList() error {
 //往context中传入临时信息
 func (c *context) SetLocals(key string, val interface{}) {
 	c.ctx = ctxt.WithValue(c.ctx, key, val)
+	c.locals[key] = val
 }
 
 //从context中获取临时信息
 func (c *context) GetLocals(key string) interface{} {
 	return c.ctx.Value(key)
+}
+
+//获取locals数据
+func (c *context) Locals() map[string]interface{} {
+	return c.locals
 }
 
 //获取request的query  map[string][]string
@@ -436,9 +452,6 @@ func (c *context) ClientIP() string {
 	return c.request.ClientIP()
 }
 
-
-
-
 func (c *context) Response() *Response {
 	return c.response
 }
@@ -485,7 +498,6 @@ func (c *context) SetCType(contentType string) {
 	}
 }
 
-
 //获取响应头信息
 func (c *context) WHeader() http.Header {
 	if c.isHijack {
@@ -527,8 +539,6 @@ func (c *context) CloseNotify() <-chan bool {
 	return c.response.CloseNotify()
 }
 
-
-
 //获取响应状态码
 func (c *context) Status() int {
 	if c.isHijack {
@@ -538,7 +548,6 @@ func (c *context) Status() int {
 	}
 }
 
-
 func (c *context) writeHeader(code int) {
 	if c.isHijack {
 		c.hijacker.WriteHeader(code)
@@ -547,11 +556,10 @@ func (c *context) writeHeader(code int) {
 	}
 }
 
-
 //给客户端发送响应
 func (c *context) Send(code int, data []byte) (size int, err error) {
 	if c.WHeader().Get(HeaderContentType) == "" {
-		c.SetHeader(HeaderContentType, http.DetectContentType(data))
+		c.SetCType(http.DetectContentType(data) + ";charset=utf8")
 	}
 
 	if code == 200 || code == 304 {
@@ -619,6 +627,7 @@ func (c *context) Hijack() (*HijackUp, error) {
 //模板渲染
 func (c *context) Render(tplName string, data interface{}) {
 	var err error
+	c.SetCType("text/html;charset=utf8")
 	if c.isHijack {
 		c.hijacker.setHeaders()
 		err = c.server.tplsRender.Render(c.hijacker.bufrw, tplName, data)

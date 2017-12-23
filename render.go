@@ -5,34 +5,33 @@ import (
 	"os"
 	"html/template"
 	"fmt"
-	"github.com/hypwxm/rider/riderFile"
+	"rider/utils/file"
 	"io"
 	"errors"
-	"path/filepath"
+	"log"
 )
 
 var (
-	//tplsRender BaseRender = newRender() //默认自带模板引擎
+//tplsRender BaseRender = newRender() //默认自带模板引擎
 )
 
 type BaseRender interface {
-	Render(w io.Writer, tplName string, data interface{}) error  //tplName模板名称 ,data模板数据
+	Render(w io.Writer, tplName string, data interface{}) error //tplName模板名称 ,data模板数据
 }
 
 var _ BaseRender = newRender()
 
 type render struct {
-	templates map[string]*template.Template
-	//server *HttpServer
-	tplDir string
+	templates *template.Template
+	tplDir  string
 	extName string
-	cache bool
+	FuncMap template.FuncMap
 }
 
 func newRender() *render {
 	return &render{
-		templates: make(map[string]*template.Template),
-		cache: false,
+		templates: template.New("app").Delims("{%", "%}"),
+		FuncMap: make(map[string]interface{}),
 	}
 }
 
@@ -40,10 +39,10 @@ var (
 	templateName string
 	templatePath string
 	fullTmplPath string
-	nextPrefix string
+	nextPrefix   string
 )
 
-func (rd *render) registerTpl(tplDir string, extName string, namePrefix string) {
+func (rd *render) registerTpl(tplDir string, extName string, namePrefix string) *render {
 	fileInfoArr, err := ioutil.ReadDir(tplDir)
 
 	if err != nil {
@@ -65,62 +64,62 @@ func (rd *render) registerTpl(tplDir string, extName string, namePrefix string) 
 				nextPrefix = namePrefix + "/" + templateName
 			}
 
-			rd.registerTpl(tplDir + "/" + templateName, extName, nextPrefix)
+			rd.registerTpl(tplDir+"/"+templateName, extName, nextPrefix)
 			continue
 		}
 
-		if ext := riderFile.Ext(templateName); ext != extName {
+		if ext := file.Ext(templateName); ext != extName {
 			continue
 		}
 
 		templateName = templateName[:(len(templateName) - len(extName) - 1)]
-		//templatePaths = append(templatePaths, templatePath)
-		t := template.Must(template.ParseFiles(templatePath))
-
 		if namePrefix == "" {
 			fullTmplPath = templateName
 		} else {
 			fullTmplPath = namePrefix + "/" + templateName
 		}
 
-		rd.templates[fullTmplPath] = t
+		tplByte, err := ioutil.ReadFile(templatePath)
+		if err != nil {
+			panic(err)
+		}
+
+		parseByte := defineTemp(fullTmplPath, tplByte)
+		_, err = rd.templates.Parse(string(parseByte))
+		if err != nil {
+			fmt.Println(string(parseByte))
+			panic(err)
+		}
 	}
 	if GlobalENV == ENV_Development || GlobalENV == ENV_Debug {
 		fmt.Println("templates was loaded over!")
 	}
+	return rd
 }
 
+//实现BaseRender的Render
 func (rd *render) Render(w io.Writer, tplName string, data interface{}) error {
 	//如果设置模板缓存，则从缓存中读取模板
-	if rd.cache {
-		if views, ok := rd.templates[tplName]; ok {
-			views.Execute(w, data)
-			return nil
-		}
-		return errors.New("未找到" + tplName + "模板信息")
-	} else {
-		//如果没设置缓存，需要从disk中直接读取模板文件
-		tplPath := filepath.Join(rd.tplDir, tplName + "." + rd.extName)
-		f, err := os.Stat(tplPath)
+	if views := rd.templates.Funcs(rd.FuncMap).Lookup(tplName); views != nil {
+		err := views.Execute(w, data)
 		if err != nil {
-			return err
+			log.Println(err)
 		}
-		if f.IsDir() {
-			return errors.New(tplName + "模板是个目录")
-		}
-		t := template.Must(template.ParseFiles(tplPath))
-		return t.Execute(w, data)
+		return nil
 	}
+	return errors.New("未找到" + tplName + "模板信息")
 }
 
-func (rd *render) Cache() {
-	rd.cache = true
-}
 
-func (rd *render) setTplDir (tplDir string) {
-	rd.tplDir = tplDir
-}
 
-func (rd *render) setExtName (extName string) {
-	rd.extName = extName
+
+//定义模板，返回的数据是  `{{define "tplName"}}html模板字符串{{end}}`  的字节数组
+func defineTemp(tplName string, tplByte []byte) []byte {
+	prefixByte := []byte(`{%define "` + tplName + `"%}`)
+	suffixByte := []byte(`{%end%}`)
+	preSufLen := len(append(prefixByte, suffixByte...))
+	tplLen := len(tplByte) + preSufLen
+	parseByte := make([]byte, tplLen)
+	parseByte = append(prefixByte, append(tplByte, suffixByte...)...)
+	return parseByte
 }

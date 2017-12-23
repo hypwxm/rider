@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"sync"
 	"runtime/debug"
-	"github.com/hypwxm/rider/riderFile"
-	"github.com/hypwxm/rider/smtp/FlyWhisper"
+	"rider/utils/file"
+	"rider/smtp/FlyWhisper"
 	"path/filepath"
 	"strconv"
 )
@@ -275,7 +275,7 @@ func (lq *LogQueue) DoLogQueue() {
 				lq.updateErrLogFile(lq.errLogOutFile)
 				fd, _ := lq.logOutFile_FD.Stat()
 				//判断日志文件描述符是否关闭或者文件是否被删除
-				if fd == nil || !riderFile.IsExist(lq.logOutFile) {
+				if fd == nil || !file.IsExist(lq.logOutFile) {
 					f, err := lq.getFileFd(lq.logOutFile)
 					if err == nil {
 						lq.SetLogOut(f)
@@ -283,7 +283,7 @@ func (lq *LogQueue) DoLogQueue() {
 				}
 				//判断错误日志文件描述符是否关闭或者文件是否被删除
 				errfd, _ := lq.errLogOutFile_FD.Stat()
-				if errfd == nil || !riderFile.IsExist(lq.errLogOutFile) {
+				if errfd == nil || !file.IsExist(lq.errLogOutFile) {
 					f, err := lq.getFileFd(lq.errLogOutFile)
 					if err == nil {
 						lq.SetErrLogOut(f)

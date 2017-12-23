@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 	"strings"
-	"github.com/hypwxm/rider/riderFile"
+	"rider/utils/file"
 	"time"
 	"fmt"
 	"path/filepath"
@@ -57,10 +57,10 @@ func createErrLogFile(filename string) (*os.File, error) {
 //日志文件创建失败，会将日志转移至os.Stdout
 func (lq *LogQueue) SetLogOutPath(filename string) error {
 	if strings.TrimSpace(filename) == "" {
-		filename = riderFile.GetCWD()
+		filename = file.GetCWD()
 	}
 	//判断filename是否存在，并且不为文件夹
-	if riderFile.IsExist(filename) && !riderFile.IsDir(filename) {
+	if file.IsExist(filename) && !file.IsDir(filename) {
 		filename = filepath.Dir(filepath.Clean(filename))
 	} else {
 		err := os.MkdirAll(filepath.Dir(filename), 0777)

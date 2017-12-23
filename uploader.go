@@ -6,7 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"errors"
-	"github.com/hypwxm/rider/riderFile"
+	"rider/utils/file"
 	"strings"
 )
 
@@ -18,12 +18,12 @@ type UploadFile struct {
 	size int64
 }
 
-func NewUploadFile(file multipart.File, header *multipart.FileHeader) *UploadFile {
+func NewUploadFile(f multipart.File, header *multipart.FileHeader) *UploadFile {
 	return &UploadFile{
-		File:     file,
+		File:     f,
 		header:   header,
 		Name: header.Filename,
-		Ext:  riderFile.Ext(header.Filename),
+		Ext:  file.Ext(header.Filename),
 	}
 }
 

@@ -3,7 +3,7 @@ package FlyWhisper
 import (
 	"mime"
 	"path/filepath"
-	"github.com/hypwxm/rider/cryptos"
+	"rider/utils/cryptos"
 	"strings"
 	"errors"
 )

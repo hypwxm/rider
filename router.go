@@ -3,18 +3,18 @@
 package rider
 
 import (
-	"net/http"
-	"sync"
-	"path/filepath"
-	"strings"
 	"container/list"
-	"regexp"
-	"github.com/hypwxm/rider/logger"
-	"time"
-	"runtime/debug"
 	"errors"
 	"log"
+	"net/http"
 	"os"
+	"path/filepath"
+	"regexp"
+	"rider/logger"
+	"runtime/debug"
+	"strings"
+	"sync"
+	"time"
 )
 
 var sameRouterError error = errors.New("duplicate route registration")
@@ -66,7 +66,6 @@ type handlerRouter map[string]*Router
 //  map["/home"]["GET"]*Router
 type RegisteredRouters map[string]handlerRouter
 
-
 //子路由初始化方法
 func NewRouter() *Router {
 	return &Router{
@@ -81,61 +80,65 @@ func (r *Router) getByPath(path string, request *Request) handlerRouter {
 		//path == "/a/b/c/" 去除最后的"/"在进行比较
 		path = path[:len(path)-1]
 	}
-walk:
+	// 先进行绝对匹配 （可以加快绝对匹配速度，/a/b和/a/:id可以共存，除非id==b，否则不会冲突）
 	for k, v := range r.subRouter {
 		if path == k {
 			return v
-		} else {
-			//拆解定义的路由
-			params := strings.Split(k, "/")
-			//拆解请求的路由
-			pathParams := strings.Split(path, "/")
+		}
+	}
+walk:
+	// 在进行非绝对匹配，（定义了路径参数的路由）
+	for k, v := range r.subRouter {
 
-			//len(pathParams) >= len(params)
+		//拆解定义的路由
+		params := strings.Split(k, "/")
+		//拆解请求的路由
+		pathParams := strings.Split(path, "/")
 
-			//判断正则匹配
-			//cleanPath := strings.Replace(k, "/", "\\/", -1)
-			//fmt.Println(cleanPath)
-			reg, err := regexp.Compile("^" + k + "$")
-			if err != nil {
-				panic(err)
-			}
+		//len(pathParams) >= len(params)
 
-			//定义的路径转换成正则后满足请求的路径
-			if reg.MatchString(path) {
-				matchParams := reg.FindAllSubmatch([]byte(path), -1) //[[00 00 00] [11 11 11]]
-				if len(matchParams) == 1 {
-					matchParams2 := matchParams[0] //[00 00 00]
-					//索引为0的值是路径本身，不需要, 取matchParams2[1:]
-					if len(matchParams2) > 1 {
-						for _, pathParamsValue := range matchParams2[1:] {
-							request.pathParams = append(request.pathParams, string(pathParamsValue))
-						}
+		//判断正则匹配
+		//cleanPath := strings.Replace(k, "/", "\\/", -1)
+		//fmt.Println(cleanPath)
+		reg, err := regexp.Compile("^" + k + "$")
+		if err != nil {
+			panic(err)
+		}
+
+		//定义的路径转换成正则后满足请求的路径
+		if reg.MatchString(path) {
+			matchParams := reg.FindAllSubmatch([]byte(path), -1) //[[00 00 00] [11 11 11]]
+			if len(matchParams) == 1 {
+				matchParams2 := matchParams[0] //[00 00 00]
+				//索引为0的值是路径本身，不需要, 取matchParams2[1:]
+				if len(matchParams2) > 1 {
+					for _, pathParamsValue := range matchParams2[1:] {
+						request.pathParams = append(request.pathParams, string(pathParamsValue))
 					}
 				}
-				return v
 			}
+			return v
+		}
 
-			//比较拆解的两个切片的长度，如果长度不一样，肯定就不匹配
-			if len(params) != len(pathParams) {
-				continue
-			}
-			//如果长度相等了，就按顺序匹配每一个字段
-			for pIndex, param := range params {
-				//  ":"开头的说明是路由参数，
-				if !(strings.HasPrefix(param, ":")) {
-					if pathParams[pIndex] != param {
-						request.params = make(map[string]string)
-						continue walk
-					} else if pIndex == len(params)-1 {
-						return v
-					}
-				} else {
-					paramName := strings.TrimPrefix(param, ":")
-					request.params[paramName] = pathParams[pIndex]
-					if pIndex == len(params)-1 {
-						return v
-					}
+		//比较拆解的两个切片的长度，如果长度不一样，肯定就不匹配
+		if len(params) != len(pathParams) {
+			continue
+		}
+		//如果长度相等了，就按顺序匹配每一个字段
+		for pIndex, param := range params {
+			//  ":"开头的说明是路由参数，
+			if !(strings.HasPrefix(param, ":")) {
+				if pathParams[pIndex] != param {
+					request.params = make(map[string]string)
+					continue walk
+				} else if pIndex == len(params)-1 {
+					return v
+				}
+			} else {
+				paramName := strings.TrimPrefix(param, ":")
+				request.params[paramName] = pathParams[pIndex]
+				if pIndex == len(params)-1 {
+					return v
 				}
 			}
 		}
@@ -266,6 +269,7 @@ func (r *Router) Path() string {
 func (r *Router) USE(middleware ...HandlerFunc) {
 	r.Middleware = append(r.Middleware, middleware...)
 }
+
 //http方法的子路由绑定使用，或者根路由通过入口最终进入的实现http服务绑定的地方
 func (r *Router) ANY(path string, handlers ...HandlerFunc) {
 	r.addRouter("ANY", path, handlers...)
@@ -366,7 +370,7 @@ func (r *Router) addChild(path string, router ...IsRouterHandler) {
 	var toRouter *Router
 
 	for k, _ := range router {
-		if k < len(router) - 1 {
+		if k < len(router)-1 {
 			if route, ok := router[k].(HandlerFunc); !ok {
 				r.server.logger.FATAL("put kid router at the end when register kid router")
 			} else {
@@ -441,7 +445,7 @@ func (r *Router) addChild(path string, router ...IsRouterHandler) {
 }
 
 //判断路由重复
-func (r *Router) duplicateRoute(method string, path string) {
+func (r *Router) duplicateRoute(path string, method string) {
 	if methodRouter, ok := r.subRouter[path]; ok {
 		if _, ok := methodRouter[method]; ok {
 			log.Println("[ERROR] ", routerError{path, method, sameRouterError}.string())

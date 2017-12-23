@@ -1,15 +1,14 @@
 package rider
 
 import (
-	"github.com/hypwxm/rider/jwt"
-	"time"
-	"net/http"
 	jwtgo "github.com/dgrijalva/jwt-go"
-
+	"net/http"
+	"rider/jwt"
+	"time"
 )
 
 type riderJwter struct {
-	jwt *jwt.Jwter
+	jwt     *jwt.Jwter
 	context Context
 	expires time.Duration
 }
@@ -35,7 +34,7 @@ func RiderJwt(secret string, expires time.Duration) HandlerFunc {
 		rj.jwt = jwt.NewJWTer(secret, expires)
 		_, err := rj.jwt.CreateJwt(nil)
 		if err != nil {
-			c.Next(err)
+			c.Next(NError{500, err.Error()})
 			return
 		}
 		c.SetCookie(http.Cookie{
@@ -49,7 +48,7 @@ func RiderJwt(secret string, expires time.Duration) HandlerFunc {
 }
 
 //发送tokenCookie
-func(rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
+func (rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 	tokenString, err := rj.jwt.CreateJwt(rj.jwt.Claims)
 	if err != nil {
 		return "", err

@@ -17,10 +17,13 @@ import (
 	"time"
 	"os"
 	"path/filepath"
-	"github.com/hypwxm/rider/logger"
+	"rider/logger"
 	ctxt "context"
 	"os/signal"
 	"syscall"
+	"strings"
+	"rider/utils/file"
+	"errors"
 )
 
 const (
@@ -273,20 +276,18 @@ func (r *rider) Error(errorHandle func(c Context, err string, code int)) {
 }
 
 //设置模板路径（默认不缓存）
-func (r *rider) SetViews(tplDir string, extName string) {
+//tplDir以"/"开头，不会对其进行操作。如果直接以路径开头的，前面会默认跟上当前工作路径
+func (r *rider) SetViews(tplDir string, extName string) (*render, error) {
+	if !(strings.HasPrefix(tplDir, "/")) {
+		tplDir = filepath.Join(file.GetCWD(), tplDir)
+	}
 	r.GetServer().tplDir = tplDir
 	r.GetServer().tplExtName = extName
 	if tplsRender, ok := r.GetServer().tplsRender.(*render); ok {
-		tplsRender.setTplDir(tplDir)
-		tplsRender.setExtName(extName)
-	}
-}
-
-//设置模板缓存(默认不开启)
-func (r *rider) CacheViews() {
-	if tplsRender, ok := r.GetServer().tplsRender.(*render); ok {
-		tplsRender.Cache()
-		tplsRender.registerTpl(r.server.tplDir, r.server.tplExtName, "")
+		appRender := tplsRender.registerTpl(tplDir, extName, "")
+		return appRender, nil
+	} else {
+		return nil, errors.New("render is not implement BaseRender")
 	}
 }
 
@@ -298,6 +299,9 @@ func (r *rider) ViewEngine(render BaseRender) {
 
 //设置静态文件目录
 func (r *rider) SetStatic(staticPath string) {
+	if !(strings.HasPrefix(staticPath, "/")) {
+		staticPath = filepath.Join(file.GetCWD(), staticPath)
+	}
 	f, err := os.Stat(staticPath)
 	if err != nil {
 		r.server.logger.FATAL(err.Error())

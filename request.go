@@ -3,7 +3,7 @@ package rider
 import (
 	"net/http"
 	"net/url"
-	"github.com/hypwxm/rider/cryptos"
+	"rider/utils/cryptos"
 	"strings"
 	"path/filepath"
 	"errors"
