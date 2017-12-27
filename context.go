@@ -201,7 +201,9 @@ type context struct {
 	committed      bool                   //##表示状态码是否已经发送（writeHeader有无调用）
 	jwt            *riderJwter            //用于存储jwt
 	locals         map[string]interface{} //用户存储locals的变量，用户输出给模板时调用
-
+	query          url.Values             //存放请求查询参数
+	body           url.Values             //存放请求体内的字段（不包含get查询参数字段）
+	form           url.Values             //存放请求参数（包含get，post，put）
 }
 
 func newContext(w http.ResponseWriter, r *http.Request, server *HttpServer) Context {
@@ -244,6 +246,9 @@ func (c *context) reset(w *Response, r *Request, server *HttpServer) *context {
 	c.locals = make(map[string]interface{})
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
 	//go c.timeout()
+	c.query = c.request.query()
+	c.body = c.request.body()
+	c.form = c.request.form()
 	return c
 }
 
@@ -263,6 +268,9 @@ func (c *context) release() {
 	c.jwt = nil
 	c.committed = false
 	c.locals = nil
+	c.query = nil
+	c.body = nil
+	c.form = nil
 }
 
 //处理下一个中间件
@@ -364,22 +372,32 @@ func (c *context) Locals() map[string]interface{} {
 
 //获取request的query  map[string][]string
 func (c *context) Query() url.Values {
-	return c.request.Query()
+	return c.query
 }
 
 //根据key查询query
 func (c *context) QueryString(key string) string {
-	return c.request.QueryValue(key)
+	return c.Query().Get(key)
 }
 
 //获取request请求体  map[string][]string
 func (c *context) Body() url.Values {
-	return c.request.Body()
+	return c.body
 }
 
 //根据key查询body里面的某一字段的第一个值
 func (c *context) BodyValue(key string) string {
-	return c.request.BodyValue(key)
+	return c.body.Get(key)
+}
+
+//根据key查询请求参数（包含get，post，put的所有字段）
+func (c *context) Form() url.Values {
+	return c.form
+}
+
+//根据key查询请求参数里面的某一字段的第一个值（包含get，post，put的所有字段）
+func (c *context) FormString(key string) string {
+	return c.form.Get(key)
 }
 
 //根据客户端传过来的字段名会返回第一个文件

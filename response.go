@@ -1,13 +1,13 @@
 package rider
 
 import (
-	"net/http"
-	"net"
 	"bufio"
-	"net/textproto"
-	"strings"
 	"crypto/md5"
 	"encoding/hex"
+	"net"
+	"net/http"
+	"net/textproto"
+	"strings"
 )
 
 type (
@@ -39,6 +39,7 @@ func (r *Response) HeaderValue(key string) string {
 func (r *Response) Redirect(code int, targetUrl string) {
 	r.Header().Set("Location", targetUrl)
 	r.WriteHeader(code)
+	r.Write([]byte(""))
 }
 
 func (r *Response) SetWriter(w http.ResponseWriter) *Response {
@@ -156,7 +157,7 @@ func weakEtag(chunk []byte, r *http.Request) (string, bool) {
 		// Character values allowed in ETags.
 		case c == 0x21 || c >= 0x23 && c <= 0x7E || c >= 0x80:
 		case c == '"':
-			ifNoneMatch = string(ifNoneMatch[start+1:i])
+			ifNoneMatch = string(ifNoneMatch[start+1 : i])
 		default:
 			return newEtag, false
 		}

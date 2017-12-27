@@ -82,7 +82,7 @@ func (r *Router) getByPath(path string, request *Request) handlerRouter {
 	}
 	// 先进行绝对匹配 （可以加快绝对匹配速度，/a/b和/a/:id可以共存，除非id==b，否则不会冲突）
 	for k, v := range r.subRouter {
-		if path == k {
+		if strings.ToLower(path) == strings.ToLower(k) {
 			return v
 		}
 	}
@@ -128,7 +128,7 @@ walk:
 		for pIndex, param := range params {
 			//  ":"开头的说明是路由参数，
 			if !(strings.HasPrefix(param, ":")) {
-				if pathParams[pIndex] != param {
+				if strings.ToLower(pathParams[pIndex]) != strings.ToLower(param) {
 					request.params = make(map[string]string)
 					continue walk
 				} else if pIndex == len(params)-1 {

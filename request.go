@@ -1,13 +1,13 @@
 package rider
 
 import (
-	"net/http"
-	"net/url"
-	"rider/utils/cryptos"
-	"strings"
-	"path/filepath"
 	"errors"
 	"net"
+	"net/http"
+	"net/url"
+	"path/filepath"
+	"rider/utils/cryptos"
+	"strings"
 )
 
 type Requester interface {
@@ -15,18 +15,16 @@ type Requester interface {
 	load(r *http.Request) *Request                                     //初始化一个requset
 	release()                                                          //重制Request，销毁变量，放入pool
 	RequestID() string                                                 //获取请求的id
-	Query() url.Values                                                 //获取请求url里面的参数部分(单个值查询请用QueryString)
+	query() url.Values                                                 //获取请求url里面的参数部分(单个值查询请用QueryString)
 	RawQuery() string                                                  //获取请求的原始字符串  a=1&b=2
-	QueryValue(key string) string                                      //获取某个字段的url参数值
 	FormFile(key string) (*UploadFile, error)                          //请求头为multipart/form-data时获取key字段域的第一个文件
 	FormFiles(key string) ([]*UploadFile, error)                       //请求头为multipart/form-data时获取key字段域的文件列表
 	StoreFormFile(file *UploadFile, fileName string) (int64, error)    //FormFile返回一个文件，然后传入这里的第一个参数，保存到fileName文件
 	StoreFormFiles(files []*UploadFile, path string) ([]string, error) //FormFile返回文件列表，传入第一个参数，保存的文件名是随机的字符串，后缀名取文件上传时的本身后缀名
-	FormValues() url.Values                                            //获取url和body里面的参数。同名参数，body的值会排在前名
-	Body() url.Values                                                  //获取请求体的参数，不包括文件，不包括url参数
-	BodyValue(key string) string                                       //根据key获取请求体内具体某个字段的值
+	form() url.Values                                                  //获取url和body里面的参数。同名参数，body的值会排在前名
+	body() url.Values                                                  //获取请求体的参数，不包括文件，不包括url参数
 	ContentType() string                                               //获取请求体的content-type
-	Header(key string) http.Header                                          //获取请求头信息
+	Header(key string) http.Header                                     //获取请求头信息
 	ClientIP() string                                                  //获取远程请求者的ip地址，会获取源地址（非代理地址）
 	Path() string                                                      //获取请求的url路径
 	IsAJAX() bool                                                      //验证请求是否为ajax请求
@@ -69,7 +67,7 @@ func (req *Request) RequestID() string {
 }
 
 // QueryStrings 返回查询字符串map表示
-func (req *Request) Query() url.Values {
+func (req *Request) query() url.Values {
 	return req.request.URL.Query()
 }
 
@@ -79,17 +77,10 @@ func (req *Request) RequestURI() string {
 }
 
 /*
-* 获取原始查询字符串
+* 获取原始查询字符串   a=b&c=d
  */
 func (req *Request) RawQuery() string {
 	return req.request.URL.RawQuery
-}
-
-/*
-* 根据指定key获取对应value
- */
-func (req *Request) QueryValue(key string) string {
-	return req.request.URL.Query().Get(key)
 }
 
 //当客户端的请求头的content-type为multipart/form-data时获取请求体内的文件
@@ -152,7 +143,7 @@ func (req *Request) StoreFormFiles(files []*UploadFile, path string) ([]string, 
 /*
 * 获取包括post、put和get内的值
  */
-func (req *Request) FormValues() url.Values {
+func (req *Request) form() url.Values {
 	req.parseForm()
 	return req.request.Form
 }
@@ -183,14 +174,9 @@ func (req *Request) HeaderValue(key string) string {
 }
 
 //获取请求体body内容 url.Value，，
-func (req *Request) Body() url.Values {
+func (req *Request) body() url.Values {
 	req.parseForm()
 	return req.request.PostForm
-}
-
-//获取body各字段的第一个值
-func (req *Request) BodyValue(key string) string {
-	return req.request.PostFormValue(key)
 }
 
 //RemoteAddr to an "IP" address

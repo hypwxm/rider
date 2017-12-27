@@ -1,14 +1,14 @@
 package rider
 
 import (
-	"io/ioutil"
-	"os"
-	"html/template"
-	"fmt"
-	"rider/utils/file"
-	"io"
 	"errors"
+	"fmt"
+	"html/template"
+	"io"
+	"io/ioutil"
 	"log"
+	"os"
+	"rider/utils/file"
 )
 
 var (
@@ -23,15 +23,15 @@ var _ BaseRender = newRender()
 
 type render struct {
 	templates *template.Template
-	tplDir  string
-	extName string
-	FuncMap template.FuncMap
+	tplDir    string
+	extName   string
+	FuncMap   template.FuncMap
 }
 
 func newRender() *render {
 	return &render{
 		templates: template.New("app").Delims("{%", "%}"),
-		FuncMap: make(map[string]interface{}),
+		FuncMap:   template.FuncMap{},
 	}
 }
 
@@ -42,7 +42,7 @@ var (
 	nextPrefix   string
 )
 
-func (rd *render) registerTpl(tplDir string, extName string, namePrefix string) *render {
+func (rd *render) registerTpl(tplDir string, extName string, funcMap template.FuncMap, namePrefix string) *render {
 	fileInfoArr, err := ioutil.ReadDir(tplDir)
 
 	if err != nil {
@@ -64,7 +64,7 @@ func (rd *render) registerTpl(tplDir string, extName string, namePrefix string) 
 				nextPrefix = namePrefix + "/" + templateName
 			}
 
-			rd.registerTpl(tplDir+"/"+templateName, extName, nextPrefix)
+			rd.registerTpl(tplDir+"/"+templateName, extName, funcMap, nextPrefix)
 			continue
 		}
 
@@ -85,7 +85,7 @@ func (rd *render) registerTpl(tplDir string, extName string, namePrefix string) 
 		}
 
 		parseByte := defineTemp(fullTmplPath, tplByte)
-		_, err = rd.templates.Parse(string(parseByte))
+		_, err = rd.templates.Funcs(funcMap).Parse(string(parseByte))
 		if err != nil {
 			fmt.Println(string(parseByte))
 			panic(err)
@@ -100,7 +100,7 @@ func (rd *render) registerTpl(tplDir string, extName string, namePrefix string) 
 //实现BaseRender的Render
 func (rd *render) Render(w io.Writer, tplName string, data interface{}) error {
 	//如果设置模板缓存，则从缓存中读取模板
-	if views := rd.templates.Funcs(rd.FuncMap).Lookup(tplName); views != nil {
+	if views := rd.templates.Lookup(tplName); views != nil {
 		err := views.Execute(w, data)
 		if err != nil {
 			log.Println(err)
@@ -109,9 +109,6 @@ func (rd *render) Render(w io.Writer, tplName string, data interface{}) error {
 	}
 	return errors.New("未找到" + tplName + "模板信息")
 }
-
-
-
 
 //定义模板，返回的数据是  `{{define "tplName"}}html模板字符串{{end}}`  的字节数组
 func defineTemp(tplName string, tplByte []byte) []byte {

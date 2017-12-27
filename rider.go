@@ -13,17 +13,17 @@
 package rider
 
 import (
+	ctxt "context"
+	"html/template"
 	"net/http"
-	"time"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"rider/logger"
-	ctxt "context"
-	"os/signal"
-	"syscall"
-	"strings"
 	"rider/utils/file"
-	"errors"
+	"strings"
+	"syscall"
+	"time"
 )
 
 const (
@@ -60,8 +60,8 @@ type baseRider interface {
 
 //http服务的入口，用户初始化和缓存服务的一些信息
 type rider struct {
-	server  *HttpServer //注册服务用的serveMu，全局统一
-	routers *Router
+	server    *HttpServer //注册服务用的serveMu，全局统一
+	routers   *Router
 	appServer *http.Server
 }
 
@@ -88,7 +88,6 @@ func SetEnvDebug() {
 	SetEnvMode("debug")
 }
 
-
 //初始化服务入口组建
 func New() *rider {
 	server := newHttpServer()
@@ -113,14 +112,13 @@ func newRootRouter(server *HttpServer) *Router {
 	return _router
 }
 
-
-
-
 //提供端口监听服务，监听rider里面的serveMux,调用http自带的服务启用方法
 func (r *rider) Listen(port string) (err error) {
 	if port == "" {
 		port = addr
 	}
+
+	r.registerTemp() // 使模板生效
 
 	r.appServer.Addr = port
 	r.appServer.ReadTimeout = readTimeout
@@ -132,7 +130,6 @@ func (r *rider) Listen(port string) (err error) {
 	}
 	return
 }
-
 
 func (r *rider) Graceful(port string) {
 	ch := make(chan os.Signal)
@@ -152,7 +149,6 @@ func (r *rider) Graceful(port string) {
 func (r *rider) Routers() *Router {
 	return r.routers
 }
-
 
 //http请求的方法的入口（ANY, GET, POST...VIA）
 //path：一个跟路径，函数内部根据这个根路径创建一个根路由routers，用来管理router子路由
@@ -198,7 +194,7 @@ func (r *rider) addChildRouter(path string, router ...IsRouterHandler) {
 
 	for k, _ := range router {
 
-		if k < len(router) - 1 {
+		if k < len(router)-1 {
 			if _, ok := router[k].(HandlerFunc); !ok {
 				r.server.logger.FATAL("put kid router at the end when register kid router")
 			}
@@ -277,17 +273,21 @@ func (r *rider) Error(errorHandle func(c Context, err string, code int)) {
 
 //设置模板路径（默认不缓存）
 //tplDir以"/"开头，不会对其进行操作。如果直接以路径开头的，前面会默认跟上当前工作路径
-func (r *rider) SetViews(tplDir string, extName string) (*render, error) {
+func (r *rider) SetViews(tplDir string, extName string, funcMap template.FuncMap) {
 	if !(strings.HasPrefix(tplDir, "/")) {
 		tplDir = filepath.Join(file.GetCWD(), tplDir)
 	}
 	r.GetServer().tplDir = tplDir
 	r.GetServer().tplExtName = extName
+	r.GetServer().funcMap = funcMap
+}
+
+// 将模板注册到服务中
+func (r *rider) registerTemp() {
 	if tplsRender, ok := r.GetServer().tplsRender.(*render); ok {
-		appRender := tplsRender.registerTpl(tplDir, extName, "")
-		return appRender, nil
+		tplsRender.registerTpl(r.GetServer().tplDir, r.GetServer().tplExtName, r.GetServer().funcMap, "")
 	} else {
-		return nil, errors.New("render is not implement BaseRender")
+		r.GetLogger().ERROR("模板注册失败")
 	}
 }
 

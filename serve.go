@@ -1,17 +1,19 @@
 package rider
 
 import (
+	"html/template"
 	"net/http"
-	"sync"
-	"runtime/debug"
 	"rider/logger"
+	"runtime/debug"
+	"sync"
 )
 
 type HttpServer struct {
-	tplDir string
+	tplDir     string
 	tplExtName string
+	funcMap    template.FuncMap
 	tplsRender BaseRender
-	logger *logger.LogQueue
+	logger     *logger.LogQueue
 }
 
 type ErrorHandler interface {
@@ -52,13 +54,12 @@ var basePool *pool = &pool{
 func (h *HttpServer) NewHttpServer() *HttpServer {
 	return &HttpServer{}
 }
-var ErrorHandle func(c Context, err string, code int)
 
+var ErrorHandle func(c Context, err string, code int)
 
 func HttpError(c Context, err string, code int) {
 	ErrorHandle(c, err, code)
 }
-
 
 //全局的错误处理，创建服务可以直接重写该方法
 func init() {
