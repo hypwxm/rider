@@ -313,6 +313,9 @@ func (r *Router) addRouter(method string, path string, handlers ...HandlerFunc) 
 		r.subRouter = make(RegisteredRouters)
 	}
 
+	// 去掉路径后的/
+	path = filepath.Clean(path)
+
 	if r.subRouter[path] == nil {
 		r.subRouter[path] = make(handlerRouter)
 	}
@@ -353,6 +356,7 @@ func (r *Router) addRouter(method string, path string, handlers ...HandlerFunc) 
 		}
 
 	}
+
 	r.subRouter[path][method] = route
 
 	r.mux.Unlock()

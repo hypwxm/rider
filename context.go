@@ -621,6 +621,7 @@ func (c *context) Redirect(code int, targetUrl string) {
 			code = 307
 		}
 	}
+	c.SetHeader("Content-Length", "0")
 	c.response.Redirect(code, targetUrl)
 }
 

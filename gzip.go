@@ -2,13 +2,12 @@ package rider
 
 import (
 	"compress/gzip"
-	"strings"
-	"net/http"
-	"sync"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
+	"strings"
+	"sync"
 )
-
 
 const (
 	BestCompression    = gzip.BestCompression
@@ -31,7 +30,7 @@ func Gzip(level int) HandlerFunc {
 		}
 		return gz
 	}
-	return func(c Context)  {
+	return func(c Context) {
 		if !shouldCompress(c.Request().request) {
 			c.Next()
 			return
@@ -105,3 +104,13 @@ func (g *gzipWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return n, rw, nil
 }
 */
+
+//在客户端关闭连接但还未发送响应体时，关闭连接
+func (g *gzipWriter) CloseNotify() <-chan bool {
+	/*notify := r.writer.(http.CloseNotifier).CloseNotify()
+	go func() {
+		<-notify
+		r.server.logger.WARNING("HTTP connection just closed.")
+	}()*/
+	return g.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
