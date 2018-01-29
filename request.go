@@ -61,6 +61,10 @@ func (req *Request) release() {
 	req.pathParams = []string{}
 }
 
+func (req *Request) Req() *http.Request {
+	return req.request
+}
+
 // RequestID get unique ID with current request
 func (req *Request) RequestID() string {
 	return req.requestID

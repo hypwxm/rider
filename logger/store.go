@@ -1,16 +1,16 @@
 package logger
 
 import (
-	"io"
-	"os"
-	"strings"
-	"rider/utils/file"
-	"time"
-	"fmt"
-	"path/filepath"
-	"strconv"
-	"log"
 	"errors"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"rider/utils/file"
+	"strconv"
+	"strings"
+	"time"
 )
 
 //为日志存储设置多功能存储（默认终端，输出到日志文件，发送到邮箱）

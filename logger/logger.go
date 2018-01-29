@@ -1,18 +1,18 @@
 package logger
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
-	"runtime"
-	"errors"
-	"time"
-	"fmt"
-	"sync"
-	"runtime/debug"
-	"rider/utils/file"
-	"rider/smtp/FlyWhisper"
 	"path/filepath"
+	"rider/smtp/FlyWhisper"
+	"rider/utils/file"
+	"runtime"
+	"runtime/debug"
 	"strconv"
+	"sync"
+	"time"
 )
 
 const (
@@ -326,7 +326,7 @@ func NewLogger() *LogQueue {
 		loggers:        make(chan *logCon, 10000),
 		level:          defaultLogLevel,
 		mux:            new(sync.Mutex),
-		maxLogFileSize: 20 << 20, //20MB
+		maxLogFileSize: 20 << 20, //20MB  默认日志文件大小上限，超过会自动创建新日志文件
 	}
 	//设置默认只输出到os.Stdout
 	logger.SetDestination(0)

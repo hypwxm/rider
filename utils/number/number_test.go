@@ -122,6 +122,8 @@ func TestIsPosNum(t *testing.T) {
 		".01",
 		"0.1",
 		"1.",
+		"010.",
+		"10.00",
 	}
 	for k, _ := range testStr {
 		if !IsPosNum(testStr[k]) {
