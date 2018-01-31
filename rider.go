@@ -273,6 +273,7 @@ func (r *rider) Error(errorHandle func(c Context, err string, code int)) {
 
 //设置模板路径（默认不缓存）
 //tplDir以"/"开头，不会对其进行操作。如果直接以路径开头的，前面会默认跟上当前工作路径
+// 调用该方法，默认启用模版
 func (r *rider) SetViews(tplDir string, extName string, funcMap template.FuncMap) {
 	if !(strings.HasPrefix(tplDir, "/")) {
 		tplDir = filepath.Join(file.GetCWD(), tplDir)
@@ -280,10 +281,14 @@ func (r *rider) SetViews(tplDir string, extName string, funcMap template.FuncMap
 	r.GetServer().tplDir = tplDir
 	r.GetServer().tplExtName = extName
 	r.GetServer().funcMap = funcMap
+	r.GetServer().openRender = true
 }
 
 // 将模板注册到服务中
 func (r *rider) registerTemp() {
+	if !(r.GetServer().openRender) {
+		return
+	}
 	if tplsRender, ok := r.GetServer().tplsRender.(*render); ok {
 		tplsRender.registerTpl(r.GetServer().tplDir, r.GetServer().tplExtName, r.GetServer().funcMap, "")
 	} else {
@@ -298,7 +303,9 @@ func (r *rider) ViewEngine(render BaseRender) {
 }
 
 //设置静态文件目录
-func (r *rider) SetStatic(staticPath string) {
+// staticPath为文件在服务器的实际未知
+// prefix，指客户端请求时的虚拟路径
+func (r *rider) SetStatic(staticPath string, prefix string) {
 	if !(strings.HasPrefix(staticPath, "/")) {
 		staticPath = filepath.Join(file.GetCWD(), staticPath)
 	}
@@ -311,7 +318,12 @@ func (r *rider) SetStatic(staticPath string) {
 		r.server.logger.FATAL(staticPath + "不是路径，静态文件路径必须为目录")
 		return
 	}
-	r.GET("/assets/(.*)", func(c Context) {
+
+	if strings.TrimSpace(prefix) == "" {
+		prefix = "/assets"
+	}
+
+	r.GET(prefix+"/(.*)", func(c Context) {
 		c.SendFile(filepath.Join(staticPath, c.PathParams()[0]))
 	})
 }

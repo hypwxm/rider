@@ -9,6 +9,7 @@ import (
 )
 
 type HttpServer struct {
+	openRender bool
 	tplDir     string
 	tplExtName string
 	funcMap    template.FuncMap
@@ -29,6 +30,7 @@ type pool struct {
 func newHttpServer() *HttpServer {
 	return &HttpServer{
 		tplsRender: newRender(),
+		openRender: false,
 	}
 }
 
