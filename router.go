@@ -5,12 +5,12 @@ package rider
 import (
 	"container/list"
 	"errors"
-	"github.com/hypwxm/rider/logger"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
+	"rider2/logger"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -74,7 +74,13 @@ func NewRouter() *Router {
 	}
 }
 
-//判断注册的路由里面和请求的路由是否匹配，包括路由参数匹配
+//判断注册的路由里面和请求的路由是否匹配，包括路由参数匹配（路由不区分大小写）
+/**
+匹配顺序（正则匹配和params请不要混合使用）
+1:完整匹配
+2:params匹配
+3:正则匹配
+**/
 func (r *Router) getByPath(path string, request *Request) handlerRouter {
 	if filepath.Clean(path) != "/" && strings.LastIndex(path, "/") == len(path)-1 {
 		//path == "/a/b/c/" 去除最后的"/"在进行比较
@@ -86,7 +92,7 @@ func (r *Router) getByPath(path string, request *Request) handlerRouter {
 			return v
 		}
 	}
-walk:
+	//walk:
 	// 在进行非绝对匹配，（定义了路径参数的路由）
 	for k, v := range r.subRouter {
 
@@ -96,6 +102,29 @@ walk:
 		pathParams := strings.Split(path, "/")
 
 		//len(pathParams) >= len(params)
+
+		//比较拆解的两个切片的长度，如果长度不一样，肯定就不匹配
+		if len(params) == len(pathParams) {
+
+			//如果长度相等了，就按顺序匹配每一个字段
+			for pIndex, param := range params {
+				//  ":"开头的说明是路由参数，
+				if !(strings.HasPrefix(param, ":")) {
+					if strings.ToLower(pathParams[pIndex]) != strings.ToLower(param) {
+						request.params = make(map[string]string)
+						break
+					} else if pIndex == len(params)-1 {
+						return v
+					}
+				} else {
+					paramName := strings.TrimPrefix(param, ":")
+					request.params[paramName] = pathParams[pIndex]
+					if pIndex == len(params)-1 {
+						return v
+					}
+				}
+			}
+		}
 
 		//判断正则匹配
 		//cleanPath := strings.Replace(k, "/", "\\/", -1)
@@ -118,29 +147,6 @@ walk:
 				}
 			}
 			return v
-		}
-
-		//比较拆解的两个切片的长度，如果长度不一样，肯定就不匹配
-		if len(params) != len(pathParams) {
-			continue
-		}
-		//如果长度相等了，就按顺序匹配每一个字段
-		for pIndex, param := range params {
-			//  ":"开头的说明是路由参数，
-			if !(strings.HasPrefix(param, ":")) {
-				if strings.ToLower(pathParams[pIndex]) != strings.ToLower(param) {
-					request.params = make(map[string]string)
-					continue walk
-				} else if pIndex == len(params)-1 {
-					return v
-				}
-			} else {
-				paramName := strings.TrimPrefix(param, ":")
-				request.params[paramName] = pathParams[pIndex]
-				if pIndex == len(params)-1 {
-					return v
-				}
-			}
 		}
 	}
 	return nil

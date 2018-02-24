@@ -1,20 +1,20 @@
 package main
 
 import (
+	"github.com/hypwxm/rider"
 	"os"
 	"path/filepath"
-	"rider"
 )
 
 func main() {
-	app := rider2.New()
+	app := rider.New()
 	app.Logger(8)
 
 	wd, _ := os.Getwd()
-	app.USE(rider2.Gzip(-1))
+	app.USE(rider.Gzip(-1))
 	app.SetStatic(filepath.Join(wd, "src/rider/example/setStatic/public"), "/assets")
 	//http://localhost:5001/assets/xx.js
-	app.GET("/xxx", func(c rider2.Context) {
+	app.GET("/xxx", func(c rider.Context) {
 		//time.Sleep(15e9)
 		//c.Redirect(307, "https://www.baidu.com")
 		//panic(errors.New("xxx"))

@@ -1,15 +1,15 @@
 package main
 
 import (
+	"github.com/hypwxm/rider"
+	"github.com/hypwxm/rider/modules"
 	"net/http"
-	"rider"
-	"rider/modules"
 )
 
 func main() {
-	app := rider2.New()
+	app := rider.New()
 	app.USE(modules.SecureHeader())
-	app.GET("/secure", func(context rider2.Context) {
+	app.GET("/secure", func(context rider.Context) {
 		context.Send(http.StatusOK, []byte("...."))
 	})
 	app.Listen(":5002")

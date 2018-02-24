@@ -1,15 +1,15 @@
 package main
 
 import (
-	"rider"
-	"rider/example/locals/router"
+	"github.com/hypwxm/rider"
+	"github.com/hypwxm/rider/example/locals/router"
 )
 
 func main() {
-	app := rider2.New()
+	app := rider.New()
 	app.Logger(8)
 	app.USE(
-		func(c rider2.Context) {
+		func(c rider.Context) {
 			c.SetLocals("locals", "this is the first locals")
 			c.SetLocals("locals2", "this is the second locals")
 			c.Next()

@@ -2,17 +2,17 @@ package router
 
 import (
 	"fmt"
-	"rider"
+	"github.com/hypwxm/rider"
 )
 
-func Router() *rider2.Router {
-	router := rider2.NewRouter()
-	router.GET("/", func(c rider2.Context) {
+func Router() *rider.Router {
+	router := rider.NewRouter()
+	router.GET("/", func(c rider.Context) {
 		fmt.Println(c.GetLocals("locals"))
 		fmt.Println(c.GetLocals("locals2"))
 		c.Send(200, []byte("ok"))
 	})
-	router.GET("/xx", func(c rider2.Context) {
+	router.GET("/xx", func(c rider.Context) {
 		fmt.Println(c.GetLocals("locals"))
 		fmt.Println(c.GetLocals("locals2"))
 		c.Send(200, []byte("ok2"))

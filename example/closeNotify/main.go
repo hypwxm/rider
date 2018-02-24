@@ -1,14 +1,14 @@
 package main
 
 import (
-	"rider"
+	"github.com/hypwxm/rider"
 	"time"
 )
 
 func main() {
-	app := rider2.New()
+	app := rider.New()
 	app.Logger(8)
-	app.GET("/", func(c rider2.Context) {
+	app.GET("/", func(c rider.Context) {
 		go func() {
 			<-c.Response().CloseNotify()
 			c.Logger().WARNING("http closed")

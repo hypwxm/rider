@@ -2,12 +2,12 @@ package subMiddle
 
 import (
 	"fmt"
-	"rider"
+	"github.com/hypwxm/rider"
 )
 
-func RouterSub() *rider2.Router {
-	subrouter := rider2.NewRouter()
-	subrouter.GET("/midd", func(c rider2.Context) {
+func RouterSub() *rider.Router {
+	subrouter := rider.NewRouter()
+	subrouter.GET("/midd", func(c rider.Context) {
 		fmt.Println("mide in mid in mid2")
 	})
 

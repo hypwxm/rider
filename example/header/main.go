@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"rider"
+	"github.com/hypwxm/rider"
 )
 
 func main() {
-	app := rider2.New()
-	app.GET("/", func(c rider2.Context) {
+	app := rider.New()
+	app.GET("/", func(c rider.Context) {
 		//获取请求头信息
 		heades := c.Header()
 		//获取请求头字段信息，数组的第一个值

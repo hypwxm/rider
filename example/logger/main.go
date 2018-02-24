@@ -3,12 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"rider"
-	"rider/smtp/FlyWhisper"
+	"github.com/hypwxm/rider"
+	"github.com/hypwxm/rider/smtp/FlyWhisper"
 )
 
 func main() {
-	app := rider2.New()
+	app := rider.New()
 	rlog := app.Logger(8)
 	//wd, _ := os.Getwd()
 	rlog.SetLogOutPath("")
@@ -21,14 +21,14 @@ func main() {
 		"25",
 		"postmaster@seemrice.com",
 	)
-	app.USE(rider2.Gzip(-1))
+	app.USE(rider.Gzip(-1))
 
 	//rlog.SetDestination(1)
 	//rlog.AddDestination(0)
 	//rlog.RemoveDestination(0)
 	fmt.Println(rlog.GetDestination())
 	rlog.SetLogFileMaxSize(20 << 20)
-	app.GET("/logger", func(c rider2.Context) {
+	app.GET("/logger", func(c rider.Context) {
 		c.SetHeader("ACCESS-CONTROL-ALLOW-ORIGIN", "*")
 		rlog.INFO("xx", "yy", c.RequestID())
 		rlog.DEBUG("OK")
@@ -42,10 +42,10 @@ func main() {
 			"a": "1",
 		})
 	})
-	app.GET("/log500", func(c rider2.Context) {
+	app.GET("/log500", func(c rider.Context) {
 		c.Send(200, []byte("error500"))
 	})
-	app.GET("/300", func(c rider2.Context) {
+	app.GET("/300", func(c rider.Context) {
 		c.Hijack()
 		//panic(errors.New("adad"))
 		c.Send(200, []byte("300"))
@@ -53,7 +53,7 @@ func main() {
 		//c.SetStatusCode(400)
 	})
 
-	app.GET("/panic", func(context rider2.Context) {
+	app.GET("/panic", func(context rider.Context) {
 		panic(errors.New("adadad"))
 	})
 	//app.Kid("/ada", &rider.Router{})

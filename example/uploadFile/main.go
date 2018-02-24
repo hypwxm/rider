@@ -1,27 +1,28 @@
 package main
 
 import (
+	"github.com/hypwxm/rider"
+	"html/template"
 	"os"
 	"path/filepath"
-	"rider"
 	"time"
 )
 
 func main() {
-	app := rider2.New()
+	app := rider.New()
 	wd, _ := os.Getwd()
-	app.SetViews(filepath.Join(wd, "src/rider/example/uploadFile/views"), "tpl")
+	app.SetViews(filepath.Join(wd, "src/rider/example/uploadFile/views"), "tpl", template.FuncMap{})
 	//app.CacheViews()
-	app.GET("/up1", func(c rider2.Context) {
+	app.GET("/up1", func(c rider.Context) {
 		c.Hijack()
 		c.Render("uploads", nil)
 		time.Sleep(10e9)
 	})
-	app.GET("/up2", func(c rider2.Context) {
+	app.GET("/up2", func(c rider.Context) {
 		c.Render("uploadsFiles", nil)
 	})
 	//当文件上传
-	app.POST("/uploads", func(c rider2.Context) {
+	app.POST("/uploads", func(c rider.Context) {
 		formFile, err := c.FormFile("file")
 		if err != nil {
 			panic(err)
@@ -30,7 +31,7 @@ func main() {
 		c.SendFile(filepath.Join(wd, "src/rider/example/uploadFile", formFile.Name))
 	})
 	//多文件上传
-	app.POST("/uploadsFiles", func(c rider2.Context) {
+	app.POST("/uploadsFiles", func(c rider.Context) {
 		formFiles, err := c.FormFiles("files")
 		if err != nil {
 			panic(err)

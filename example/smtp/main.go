@@ -1,10 +1,10 @@
 package main
 
 import (
-	"rider/smtp/FlyWhisper"
+	"github.com/hypwxm/rider/smtp/FlyWhisper"
 	"log"
-	"path/filepath"
 	"os"
+	"path/filepath"
 )
 
 func main() {

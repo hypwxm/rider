@@ -1,13 +1,13 @@
 package router
 
 import (
-	"rider"
+	"github.com/hypwxm/rider"
 )
 
-func Router3() *rider2.Router {
-	router := rider2.NewRouter()
+func Router3() *rider.Router {
+	router := rider.NewRouter()
 
-	router.GET("/sub", func(c rider2.Context) {
+	router.GET("/sub", func(c rider.Context) {
 		c.Send(200, []byte("第二层子集"))
 	})
 

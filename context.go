@@ -2,7 +2,7 @@ package rider
 
 import (
 	"container/list"
-	ctxt "context"
+	// ctxt "context"
 	"encoding/json"
 	"errors"
 	"github.com/hypwxm/rider/logger"
@@ -60,6 +60,12 @@ type Context interface {
 	GetLocals(key string) interface{}
 
 	Locals() map[string]interface{} //获取SetLocals设置的所有变量，用户输出给模板
+
+	// 删除locals里面的数据
+	DeleteLocals(key string)
+
+	// 删除locals的所有信息
+	DeleteAllLocals()
 
 	//只获取请求url中的查询字符串querystring的map[]string值
 	Query() url.Values
@@ -186,24 +192,24 @@ var (
 
 // "##"表示从pool取得context时必须初始化的值
 type context struct {
-	request        *Request               //##
-	response       *Response              //##
-	handlerList    *list.List             //##
-	currentHandler *list.Element          //##
-	ctx            ctxt.Context           //##标准包的context
-	cancel         ctxt.CancelFunc        //##
-	isHijack       bool                   //##
-	hijacker       *HijackUp              //##
-	isEnd          bool                   //##
-	done           chan int               //##
-	server         *HttpServer            //整个服务引用的server都是同一个
-	ended          chan int               //##
-	committed      bool                   //##表示状态码是否已经发送（writeHeader有无调用）
-	jwt            *riderJwter            //用于存储jwt
-	locals         map[string]interface{} //用户存储locals的变量，用户输出给模板时调用
-	query          url.Values             //存放请求查询参数
-	body           url.Values             //存放请求体内的字段（不包含get查询参数字段）
-	form           url.Values             //存放请求参数（包含get，post，put）
+	request        *Request      //##
+	response       *Response     //##
+	handlerList    *list.List    //##
+	currentHandler *list.Element //##
+	// ctx            ctxt.Context           //##标准包的context
+	// cancel         ctxt.CancelFunc        //##
+	isHijack  bool                   //##
+	hijacker  *HijackUp              //##
+	isEnd     bool                   //##
+	done      chan int               //##
+	server    *HttpServer            //整个服务引用的server都是同一个
+	ended     chan int               //##
+	committed bool                   //##表示状态码是否已经发送（writeHeader有无调用）
+	jwt       *riderJwter            //用于存储jwt
+	locals    map[string]interface{} //用户存储locals的变量，用户输出给模板时调用，对该变量的所有操作都未加锁，如需多协程读写，请自行加锁
+	query     url.Values             //存放请求查询参数
+	body      url.Values             //存放请求体内的字段（不包含get查询参数字段）
+	form      url.Values             //存放请求参数（包含get，post，put）
 }
 
 func newContext(w http.ResponseWriter, r *http.Request, server *HttpServer) Context {
@@ -234,7 +240,7 @@ func (c *context) reset(w *Response, r *Request, server *HttpServer) *context {
 	c.currentHandler = nil
 	c.handlerList = list.New()
 	//c.ctx = ctxt.Background()
-	c.ctx = c.request.request.Context()
+	//c.ctx = c.request.request.Context()
 	c.isHijack = false
 	c.hijacker = nil
 	//c.isEnd = false
@@ -258,7 +264,7 @@ func (c *context) release() {
 	c.request = nil
 	c.currentHandler = nil
 	c.handlerList = list.New()
-	c.ctx = nil
+	// c.ctx = nil
 	c.isHijack = false
 	c.hijacker = nil
 	c.isEnd = false
@@ -356,13 +362,26 @@ func (c *context) startHandleList() error {
 
 //往context中传入临时信息
 func (c *context) SetLocals(key string, val interface{}) {
-	c.ctx = ctxt.WithValue(c.ctx, key, val)
+	// c.ctx = ctxt.WithValue(c.ctx, key, val)
 	c.locals[key] = val
 }
 
 //从context中获取临时信息
 func (c *context) GetLocals(key string) interface{} {
-	return c.ctx.Value(key)
+	// return c.ctx.Value(key)
+	return c.locals[key]
+}
+
+// 删除context的临时信息
+func (c *context) DeleteLocals(key string) {
+	if _, ok := c.locals[key]; ok {
+		delete(c.locals, key)
+	}
+}
+
+// 删除context的所有临时变量
+func (c *context) DeleteAllLocals() {
+	c.locals = make(map[string]interface{})
 }
 
 //获取locals数据
@@ -582,7 +601,12 @@ func (c *context) Send(code int, data []byte) (size int, err error) {
 
 	if code == 200 || code == 304 {
 		if setWeakEtag(c, data, c.Request().request) {
-			c.Send(304, []byte(""))
+			c.writeHeader(304)
+			if c.isHijack {
+				c.hijacker.Write([]byte(""))
+			} else {
+				c.response.Write([]byte(""))
+			}
 			return 0, nil
 		}
 	}
