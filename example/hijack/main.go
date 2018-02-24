@@ -1,10 +1,12 @@
 package main
 
-import "rider"
+import (
+	"github.com/hypwxm/rider"
+)
 
 func main() {
-	app := rider2.New()
-	app.GET("/hijack", func(c rider2.Context) {
+	app := rider.New()
+	app.GET("/hijack", func(c rider.Context) {
 		c.Hijack()
 		c.SetHeader("a", "b")
 		c.Send(200, []byte("ok"))
