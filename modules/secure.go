@@ -1,6 +1,8 @@
 package modules
 
-import "rider"
+import (
+	"github.com/hypwxm/rider"
+)
 
 type SecureConfig struct {
 
@@ -8,13 +10,13 @@ type SecureConfig struct {
 	//1: 启用XSS过滤（通常浏览器是默认的）。 如果检测到跨站脚本攻击，浏览器将清除页面（删除不安全的部分）。
 	//1;mode=block: 启用XSS过滤。 如果检测到攻击，浏览器将不会清除页面，而是阻止页面加载。
 	//1; report=<reporting-URI>  (Chromium only): 启用XSS过滤。 如果检测到跨站脚本攻击，浏览器将清除页面并使用CSP report-uri指令的功能发送违规报告。
-	XXSSProtection string `header:"X-XSS-Protection"`  //"1; mode=block"
+	XXSSProtection string `header:"X-XSS-Protection"` //"1; mode=block"
 
 	//阻止点击挟持攻击
 	//DENY // 拒绝任何域加载
 	//SAMEORIGIN // 允许同源域下加载
 	//ALLOW-FROM // 可以定义允许frame加载的页面地址
-	XFrameOptions string `header:"x_frame_options"`   //SAMEORIGIN
+	XFrameOptions string `header:"x_frame_options"` //SAMEORIGIN
 
 	//HTTP转发HTTPS是302重定向
 	//用户在浏览器输入www.baidu.com；然后重定向到https://www.baidu.com；在这个过程中，这个跳转是可以被劫持的，叫做http劫持，特别用公共路由器
@@ -34,18 +36,16 @@ type SecureConfig struct {
 	ContentSecurityPolicy string `header:"content_security_policy"`
 
 	//X-Content-Type-Options 响应首部相当于一个提示标志，被服务器用来提示客户端一定要遵循在 Content-Type 首部中对  MIME 类型 的设定，而不能对其进行修改。这就禁用了客户端的 MIME 类型嗅探行为，换句话说，也就是意味着网站管理员确定自己的设置没有问题。
-	XContentTypeOptions string `header:"X-Content-Type-Options"`  //nosniff
+	XContentTypeOptions string `header:"X-Content-Type-Options"` //nosniff
 }
-
 
 var DefaultSecureConfig *SecureConfig = &SecureConfig{
-	XXSSProtection: "1; mode=block",
-	XFrameOptions: "SAMEORIGIN",
+	XXSSProtection:          "1; mode=block",
+	XFrameOptions:           "SAMEORIGIN",
 	StrictTransportSecurity: "",
-	ContentSecurityPolicy: "",
-	XContentTypeOptions: "nosniff",
+	ContentSecurityPolicy:   "",
+	XContentTypeOptions:     "nosniff",
 }
-
 
 func SecureHeader() rider.HandlerFunc {
 	return func(c rider.Context) {

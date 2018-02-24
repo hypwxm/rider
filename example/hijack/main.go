@@ -3,8 +3,8 @@ package main
 import "rider"
 
 func main() {
-	app := rider.New()
-	app.GET("/hijack", func(c rider.Context) {
+	app := rider2.New()
+	app.GET("/hijack", func(c rider2.Context) {
 		c.Hijack()
 		c.SetHeader("a", "b")
 		c.Send(200, []byte("ok"))

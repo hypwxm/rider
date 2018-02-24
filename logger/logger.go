@@ -3,11 +3,11 @@ package logger
 import (
 	"errors"
 	"fmt"
+	"github.com/hypwxm/rider/smtp/FlyWhisper"
+	"github.com/hypwxm/rider/utils/file"
 	"log"
 	"os"
 	"path/filepath"
-	"rider/smtp/FlyWhisper"
-	"rider/utils/file"
 	"runtime"
 	"runtime/debug"
 	"strconv"

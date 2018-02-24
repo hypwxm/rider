@@ -4,26 +4,25 @@ import (
 	"rider"
 	//user2 "rider/example/router2"
 	"flag"
-	"rider/example/router/router"
-	"os"
 	"fmt"
+	"os"
+	"rider/example/router/router"
 	"runtime/pprof"
 )
 
 type pint int
 
-
 func main() {
 
-	env := flag.String("env", rider.ENV_Production, "设置app环境变量")
+	env := flag.String("env", rider2.ENV_Production, "设置app环境变量")
 	cpuProfile := flag.String("cpuProfile", "", "xx")
 
 	flag.Parse()
 
-	rider.SetEnvMode(*env)
+	rider2.SetEnvMode(*env)
 
 	//new一个rider，创建一个app
-	app := rider.New()
+	app := rider2.New()
 	app.Logger(8)
 
 	app.Kid("/super", router.Router())
@@ -31,7 +30,6 @@ func main() {
 	startCPUProfile(cpuProfile)
 	app.Listen(":8000")
 }
-
 
 func startCPUProfile(cpuProfile *string) {
 

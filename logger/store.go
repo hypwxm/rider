@@ -3,11 +3,11 @@ package logger
 import (
 	"errors"
 	"fmt"
+	"github.com/hypwxm/rider/utils/file"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"rider/utils/file"
 	"strconv"
 	"strings"
 	"time"

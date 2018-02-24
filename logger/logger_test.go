@@ -1,9 +1,9 @@
 package logger
 
 import (
+	"github.com/hypwxm/rider/utils/file"
 	"testing"
 	"time"
-	"rider/utils/file"
 )
 
 func TestNewLogger(t *testing.T) {

@@ -6,10 +6,10 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider2.New()
 	app.Logger(8)
 	app.USE(
-		func(c rider.Context) {
+		func(c rider2.Context) {
 			c.SetLocals("locals", "this is the first locals")
 			c.SetLocals("locals2", "this is the second locals")
 			c.Next()

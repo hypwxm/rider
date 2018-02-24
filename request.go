@@ -2,11 +2,11 @@ package rider
 
 import (
 	"errors"
+	"github.com/hypwxm/rider/utils/cryptos"
 	"net"
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"rider/utils/cryptos"
 	"strings"
 )
 

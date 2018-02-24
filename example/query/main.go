@@ -5,9 +5,9 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider2.New()
 	app.Logger(8)
-	app.GET("/query", func(c rider.Context) {
+	app.GET("/query", func(c rider2.Context) {
 		//c.Send([]byte(c.QueryString("a")))
 		//time.Sleep(20e9)
 		c.Query().Del("a")

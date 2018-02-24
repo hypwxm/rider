@@ -1,9 +1,9 @@
 package rider
 
 import (
+	"github.com/hypwxm/rider/logger"
 	"html/template"
 	"net/http"
-	"rider/logger"
 	"runtime/debug"
 	"sync"
 )

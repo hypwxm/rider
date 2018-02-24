@@ -5,12 +5,12 @@ package rider
 import (
 	"container/list"
 	"errors"
+	"github.com/hypwxm/rider/logger"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
-	"rider/logger"
 	"runtime/debug"
 	"strings"
 	"sync"

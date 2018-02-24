@@ -1,40 +1,40 @@
 package FlyWhisper
 
 import (
+	"errors"
+	"github.com/hypwxm/rider/utils/cryptos"
 	"mime"
 	"path/filepath"
-	"rider/utils/cryptos"
 	"strings"
-	"errors"
 )
 
 //定义发送的内容
 type Message struct {
-	subject string
-	text []byte
-	html []byte
-	inlineImgs []*inlineImg
+	subject     string
+	text        []byte
+	html        []byte
+	inlineImgs  []*inlineImg
 	attachments []*attachment
-	to []string
+	to          []string
 }
 
 type inlineImg struct {
-	Filename string
+	Filename    string
 	contentType string
-	contentId string
+	contentId   string
 }
 
 //上传附件
 type attachment struct {
-	Filename string
+	Filename    string
 	contentType string
-	contentId string
+	contentId   string
 }
 
 func NewMessage(subject string, to []string) *Message {
 	return &Message{
 		subject: subject,
-		to: to,
+		to:      to,
 	}
 }
 
@@ -55,7 +55,7 @@ func (m *Message) RemoveRcpt(user string) string {
 	lenUsers := len(m.to)
 	for k, name := range m.to {
 		if name == user {
-			if lenUsers - 1 == k {
+			if lenUsers-1 == k {
 				m.to = m.to[:k]
 			} else {
 				m.to = append(m.to[:k], m.to[k+1:]...)
@@ -91,7 +91,6 @@ func (m *Message) RemoveInline() {
 	m.inlineImgs = []*inlineImg{}
 }
 
-
 //添加attachment
 func (m *Message) AddAttach(filename string) error {
 	if strings.TrimSpace(filename) == "" {
@@ -105,7 +104,6 @@ func (m *Message) AddAttach(filename string) error {
 	m.attachments = append(m.attachments, attach)
 	return nil
 }
-
 
 //设置inlineImg
 func (m *Message) SetAttach(filename string) error {
@@ -135,7 +133,6 @@ func (m *Message) SetText(text string) {
 func (m *Message) RemoveText() {
 	m.text = []byte{}
 }
-
 
 //添加html
 func (m *Message) AddHtml(html string) {

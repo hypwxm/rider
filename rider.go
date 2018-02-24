@@ -14,13 +14,13 @@ package rider
 
 import (
 	ctxt "context"
+	"github.com/hypwxm/rider/logger"
+	"github.com/hypwxm/rider/utils/file"
 	"html/template"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"rider/logger"
-	"rider/utils/file"
 	"strings"
 	"syscall"
 	"time"

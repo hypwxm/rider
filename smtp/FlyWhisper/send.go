@@ -1,21 +1,21 @@
 package FlyWhisper
 
 import (
-	"net/smtp"
-	"strings"
-	"net/textproto"
 	"bytes"
-	"errors"
-	"rider/utils/cryptos"
-	"path/filepath"
-	"io/ioutil"
 	"encoding/base64"
+	"errors"
+	"github.com/hypwxm/rider/utils/cryptos"
+	"io/ioutil"
+	"net/smtp"
+	"net/textproto"
+	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 //img suffix
 var (
-	ImgSuffix = []string{".bmp", ".jpg", ".jpeg", ".png", ".tiff", ".gif", ".pcx", ".tga", ".exif", ".fpx", ".svg", ".psd", ".cdr", ".pcd", ".dxf", ".ufo", ".eps", ".ai", ".raw",".wmf"}
+	ImgSuffix = []string{".bmp", ".jpg", ".jpeg", ".png", ".tiff", ".gif", ".pcx", ".tga", ".exif", ".fpx", ".svg", ".psd", ".cdr", ".pcd", ".dxf", ".ufo", ".eps", ".ai", ".raw", ".wmf"}
 )
 
 //mixed
@@ -30,27 +30,24 @@ var (
 
 //发送者
 type SMTPSender struct {
-	Username           string
-	Password           string
-	Host               string
-	Port               string
-	Header             textproto.MIMEHeader
-	Subject            string
-	From        string
-	Text string
-	Html string
+	Username string
+	Password string
+	Host     string
+	Port     string
+	Header   textproto.MIMEHeader
+	Subject  string
+	From     string
+	Text     string
+	Html     string
 }
-
-
-
 
 func NewMailer(username string, password string, host string, port string, from string) *SMTPSender {
 	return &SMTPSender{
-		Username:    username,
-		Password:    password,
-		Host:        host,
-		Port:        port,
-		From: from,
+		Username: username,
+		Password: password,
+		Host:     host,
+		Port:     port,
+		From:     from,
 	}
 }
 
@@ -76,8 +73,8 @@ func (s *SMTPSender) mailByte(message *Message) ([]byte, error) {
 		return nil, errors.New("you have not been set sender")
 	}
 	var (
-		boundaryMixed string = "@#riderMixed#@"
-		boundaryRelated string = "@#riderRelated#@"
+		boundaryMixed       string = "@#riderMixed#@"
+		boundaryRelated     string = "@#riderRelated#@"
 		boundaryAlternative string = "@#riderAlternative#@"
 	)
 	buff.WriteString("From:" + s.Username + " <" + s.From + ">\r\n")
@@ -100,7 +97,7 @@ func (s *SMTPSender) mailByte(message *Message) ([]byte, error) {
 	//start text/plain
 	if strings.TrimSpace(s.Text) != "" || strings.TrimSpace(string(message.text)) != "" {
 		buff.WriteString("Content-Type: text/plain; charset=utf-8\r\n")
-		buff.WriteString("Content-Transfer-Encoding: " + strconv.Itoa(len(s.Text) + len(message.text)) + "bit\r\n\r\n")
+		buff.WriteString("Content-Transfer-Encoding: " + strconv.Itoa(len(s.Text)+len(message.text)) + "bit\r\n\r\n")
 		if strings.TrimSpace(s.Text) != "" {
 			//global text ,this will contain every mail if was defined
 			buff.WriteString(s.Text)
@@ -169,7 +166,6 @@ func (s *SMTPSender) mailByte(message *Message) ([]byte, error) {
 	return buff.Bytes(), nil
 }
 
-
 func (s *SMTPSender) Send(message *Message) error {
 	if message == nil {
 		return errors.New("message can not be nil")
@@ -185,7 +181,6 @@ func (s *SMTPSender) Send(message *Message) error {
 	}
 	return nil
 }
-
 
 //判断是否为图片
 func isImage(filename string) bool {

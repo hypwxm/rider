@@ -1,29 +1,30 @@
 package rider
+
 //思路来源，大神dotweb的框架：更多框架信息=>
 
 import (
-	"os"
+	"errors"
+	"github.com/hypwxm/rider/utils/file"
 	"io"
 	"mime/multipart"
-	"errors"
-	"rider/utils/file"
+	"os"
 	"strings"
 )
 
 type UploadFile struct {
-	File     multipart.File
-	header   *multipart.FileHeader
-	Ext  string
-	Name string
-	size int64
+	File   multipart.File
+	header *multipart.FileHeader
+	Ext    string
+	Name   string
+	size   int64
 }
 
 func NewUploadFile(f multipart.File, header *multipart.FileHeader) *UploadFile {
 	return &UploadFile{
-		File:     f,
-		header:   header,
-		Name: header.Filename,
-		Ext:  file.Ext(header.Filename),
+		File:   f,
+		header: header,
+		Name:   header.Filename,
+		Ext:    file.Ext(header.Filename),
 	}
 }
 
@@ -31,7 +32,6 @@ func NewUploadFile(f multipart.File, header *multipart.FileHeader) *UploadFile {
 type size interface {
 	Size() int64
 }
-
 
 //获取上传的文件大小，具体需要的时候在进行赋值
 func (f *UploadFile) Size() int64 {
@@ -55,5 +55,3 @@ func (f *UploadFile) StoreFile(filename string) (size int64, err error) {
 	defer fw.Close()
 	return io.Copy(fw, f.File)
 }
-
-

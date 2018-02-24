@@ -7,8 +7,8 @@ package logger
 */
 
 import (
-	"rider/smtp/FlyWhisper"
 	"errors"
+	"github.com/hypwxm/rider/smtp/FlyWhisper"
 )
 
 func (lq *LogQueue) SmtpLogger(username string, password string, host string, port string, from string) *FlyWhisper.SMTPSender {

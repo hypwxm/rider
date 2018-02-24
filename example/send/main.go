@@ -5,11 +5,11 @@ import (
 )
 
 func main() {
-	app := rider.New()
+	app := rider2.New()
 	app.Logger(8)
-	app.GET("/", func(c rider.Context) {
-			c.Hijack()
-			c.Send(200, []byte("xx"))
+	app.GET("/", func(c rider2.Context) {
+		c.Hijack()
+		c.Send(200, []byte("xx"))
 
 	})
 	app.Listen(":5001")

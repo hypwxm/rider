@@ -1,10 +1,10 @@
 package modules
 
 import (
-	"rider"
-	"time"
+	"github.com/hypwxm/rider"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 /*
@@ -19,7 +19,7 @@ type cacheControl struct {
 func CacheControl(d int64) rider.HandlerFunc {
 	dStr := strconv.FormatInt(int64(d), 10)
 	return func(c rider.Context) {
-		c.SetHeader("Cache-Control", "max-age=" + dStr)
+		c.SetHeader("Cache-Control", "max-age="+dStr)
 		c.SetHeader("Expires", time.Now().UTC().Add(time.Duration(d)*time.Second).Format(http.TimeFormat))
 		c.Next()
 	}

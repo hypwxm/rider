@@ -1,21 +1,21 @@
 package router
 
 import (
-	"rider"
 	"fmt"
+	"rider"
 )
 
-func Router() *rider.Router {
-	router := rider.NewRouter()
-	router.GET("/", func (c rider.Context) {
-			fmt.Println(c.GetLocals("locals"))
-			fmt.Println(c.GetLocals("locals2"))
-			c.Send(200, []byte("ok"))
+func Router() *rider2.Router {
+	router := rider2.NewRouter()
+	router.GET("/", func(c rider2.Context) {
+		fmt.Println(c.GetLocals("locals"))
+		fmt.Println(c.GetLocals("locals2"))
+		c.Send(200, []byte("ok"))
 	})
-	router.GET("/xx", func (c rider.Context) {
-			fmt.Println(c.GetLocals("locals"))
-			fmt.Println(c.GetLocals("locals2"))
-			c.Send(200, []byte("ok2"))
+	router.GET("/xx", func(c rider2.Context) {
+		fmt.Println(c.GetLocals("locals"))
+		fmt.Println(c.GetLocals("locals2"))
+		c.Send(200, []byte("ok2"))
 	})
 	return router
 }
