@@ -5,12 +5,13 @@ import (
 	// ctxt "context"
 	"encoding/json"
 	"errors"
-	"github.com/hypwxm/rider/logger"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/hypwxm/rider/logger"
 )
 
 type NError struct {
@@ -73,11 +74,26 @@ type Context interface {
 	//根据字段名直接查询querystring某个字段名对应的值
 	QueryString(key string) string
 
+	// 当query不存在某一字段的值时，返回一个默认的值
+	QueryDefault(key string, def string) string
+
 	//只获取请求体内的请求参数，
 	Body() url.Values
 
 	//根据字段名直接查询"请求体"某中个字段名对应的值
 	BodyValue(key string) string
+
+	// 当body不存在某一字段的值时，返回一个默认的值
+	BodyDefault(key string, def string) string
+
+	// 返回请求的参数（包括query和body的）
+	Form() url.Values
+
+	//根据字段名直接查询"请求参数"某中个字段名对应的值
+	FormValue(key string) string
+
+	// 当请求参数不存在某一字段的值时，返回一个默认的值
+	FormDefault(key string, def string) string
 
 	//获取请求路由 /:id/:xx中值，路由参数
 	Params() map[string]string
@@ -399,6 +415,15 @@ func (c *context) QueryString(key string) string {
 	return c.Query().Get(key)
 }
 
+// QueryString返回空时提供提供一个默认值
+func (c *context) QueryDefault(key string, def string) string {
+	if c.QueryString(key) == "" {
+		return def
+	} else {
+		return c.QueryString(key)
+	}
+}
+
 //获取request请求体  map[string][]string
 func (c *context) Body() url.Values {
 	return c.body
@@ -409,14 +434,32 @@ func (c *context) BodyValue(key string) string {
 	return c.body.Get(key)
 }
 
+// QueryString返回空时提供提供一个默认值
+func (c *context) BodyDefault(key string, def string) string {
+	if c.BodyValue(key) == "" {
+		return def
+	} else {
+		return c.BodyValue(key)
+	}
+}
+
 //根据key查询请求参数（包含get，post，put的所有字段）
 func (c *context) Form() url.Values {
 	return c.form
 }
 
 //根据key查询请求参数里面的某一字段的第一个值（包含get，post，put的所有字段）
-func (c *context) FormString(key string) string {
+func (c *context) FormValue(key string) string {
 	return c.form.Get(key)
+}
+
+// formstring返回空时提供提供一个默认值
+func (c *context) FormDefault(key string, def string) string {
+	if c.BodyValue(key) == "" {
+		return def
+	} else {
+		return c.BodyValue(key)
+	}
 }
 
 //根据客户端传过来的字段名会返回第一个文件

@@ -10,11 +10,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"rider2/logger"
 	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/hypwxm/rider/logger"
 )
 
 var sameRouterError error = errors.New("duplicate route registration")
