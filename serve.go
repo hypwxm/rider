@@ -1,11 +1,12 @@
 package rider
 
 import (
-	"github.com/hypwxm/rider/logger"
 	"html/template"
 	"net/http"
 	"runtime/debug"
 	"sync"
+
+	"github.com/hypwxm/rider/logger"
 )
 
 type HttpServer struct {

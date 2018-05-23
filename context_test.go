@@ -1,16 +1,14 @@
 package rider
 
 import (
-	"testing"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
-	"fmt"
-	"rider/logger"
-	"encoding/json"
+	"testing"
+
+	"github.com/hypwxm/rider/logger"
 )
-
-
-
 
 func newTestContext() (Context, http.ResponseWriter, *http.Request) {
 	var context Context
@@ -20,7 +18,7 @@ func newTestContext() (Context, http.ResponseWriter, *http.Request) {
 	url, _ := url.Parse("localhost:5000/a/x")
 	req = &http.Request{
 		Method: http.MethodGet,
-		URL: url,
+		URL:    url,
 	}
 	server := &HttpServer{}
 	server.logger = logger.NewLogger()
@@ -38,7 +36,6 @@ func TestNewContext(t *testing.T) {
 	}
 
 }
-
 
 func TestCSend(t *testing.T) {
 	context, _, _ := newTestContext()
@@ -58,7 +55,7 @@ func TestCSendJson(t *testing.T) {
 	context, _, _ := newTestContext()
 
 	context.SendJson(200, map[string]string{
-		"a":"a",
+		"a": "a",
 	})
 	mapdata := make(map[string]string)
 
@@ -70,7 +67,6 @@ func TestCSendJson(t *testing.T) {
 	if mapdata["a"] != "a" {
 		t.Error("context.response.send error")
 	}
-
 
 	header := context.HeaderValue("Content-Type")
 	t.Logf("%s", header)
@@ -90,14 +86,13 @@ func TestHijackSend(t *testing.T) {
 	wf.body = []byte{}
 }
 
-
 func TestHijackSendJson(t *testing.T) {
 	context, _, _ := newTestContext()
 
 	context.Hijack()
 
 	context.SendJson(200, map[string]string{
-		"a":"a",
+		"a": "a",
 	})
 	mapdata := make(map[string]string)
 
@@ -110,13 +105,10 @@ func TestHijackSendJson(t *testing.T) {
 		t.Error("context.response.send error")
 	}
 
-
 	header := context.HeaderValue("Content-Type")
 	t.Logf("%s", header)
 	wf.body = []byte{}
 }
-
-
 
 func BenchmarkSend(b *testing.B) {
 

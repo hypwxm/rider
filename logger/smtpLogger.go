@@ -8,6 +8,7 @@ package logger
 
 import (
 	"errors"
+
 	"github.com/hypwxm/rider/smtp/FlyWhisper"
 )
 

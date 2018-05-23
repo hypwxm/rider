@@ -3,7 +3,6 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"github.com/hypwxm/rider/utils/file"
 	"io"
 	"log"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hypwxm/rider/utils/file"
 )
 
 //为日志存储设置多功能存储（默认终端，输出到日志文件，发送到邮箱）

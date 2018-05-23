@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
 	"os"
 	"path/filepath"
+	"rider"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 
 	wd, _ := os.Getwd()
 	app.USE(rider.Gzip(-1))
-	app.SetStatic(filepath.Join(wd, "src/rider/example/setStatic/public"), "/assets")
+	app.SetStatic(filepath.Join(wd, "src/github.com/hypwxm/rider/example/setStatic/public"), "/assets")
 	//http://localhost:5001/assets/xx.js
 	app.GET("/xxx", func(c rider.Context) {
 		//time.Sleep(15e9)

@@ -2,12 +2,13 @@ package rider
 
 import (
 	"errors"
-	"github.com/hypwxm/rider/utils/cryptos"
 	"net"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"github.com/hypwxm/rider/utils/cryptos"
 )
 
 type Requester interface {

@@ -1,17 +1,17 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
 	"html/template"
 	"os"
 	"path/filepath"
+	"rider"
 	"time"
 )
 
 func main() {
 	app := rider.New()
 	wd, _ := os.Getwd()
-	app.SetViews(filepath.Join(wd, "src/rider/example/uploadFile/views"), "tpl", template.FuncMap{})
+	app.SetViews(filepath.Join(wd, "src/github.com/hypwxm/rider/example/uploadFile/views"), "tpl", template.FuncMap{})
 	//app.CacheViews()
 	app.GET("/up1", func(c rider.Context) {
 		c.Hijack()
@@ -27,8 +27,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		c.StoreFormFile(formFile, filepath.Join(wd, "src/rider/example/uploadFile", formFile.Name))
-		c.SendFile(filepath.Join(wd, "src/rider/example/uploadFile", formFile.Name))
+		c.StoreFormFile(formFile, filepath.Join(wd, "src/github.com/hypwxm/rider/example/uploadFile", formFile.Name))
+		c.SendFile(filepath.Join(wd, "src/github.com/hypwxm/rider/example/uploadFile", formFile.Name))
 	})
 	//多文件上传
 	app.POST("/uploadsFiles", func(c rider.Context) {
@@ -36,7 +36,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		c.StoreFormFiles(formFiles, filepath.Join(wd, "src/rider/example/uploadFile"))
+		c.StoreFormFiles(formFiles, filepath.Join(wd, "src/github.com/hypwxm/rider/example/uploadFile"))
 		c.Send(200, []byte("ok"))
 	})
 	app.Listen(":5002")

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
-	"github.com/hypwxm/rider/modules"
 	"net/http"
 	"os"
 	"path/filepath"
+	"rider"
 	"strconv"
+
+	"github.com/hypwxm/rider/modules"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 		a++
 	})
 	app.GET("/cache2", func(context rider.Context) {
-		err := context.SendFile(filepath.Join(wd, "src/rider/example/cacheControl/main.go"))
+		err := context.SendFile(filepath.Join(wd, "src/github.com/hypwxm/rider/example/cacheControl/main.go"))
 		context.Logger().ERROR(err)
 	})
 	app.Listen(":5003")

@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/hypwxm/rider"
+	"rider"
+
 	"github.com/hypwxm/rider/example/middleware/subMiddle"
 )
 

@@ -11,8 +11,7 @@ type IsRouterHandler interface {
 
 type HandlerFunc func(context Context)
 
-
-func(h HandlerFunc) BeenHandler() {
+func (h HandlerFunc) BeenHandler() {
 
 }
 

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
 	"os"
 	"path/filepath"
+	"rider"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 	app.GET("/file", func(c rider.Context) {
 		c.Hijack()
 		//c.Send([]byte("xx"))
-		c.SendFile(filepath.Join(wd, "src/rider/example/sendFile/9f26d8773445ac485663e91080c75877.html"))
+		c.SendFile(filepath.Join(wd, "src/github.com/hypwxm/rider/example/sendFile/9f26d8773445ac485663e91080c75877.html"))
 	})
 	app.Listen(":5007")
 }

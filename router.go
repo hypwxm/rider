@@ -83,6 +83,8 @@ func NewRouter() *Router {
 3:正则匹配
 **/
 func (r *Router) getByPath(path string, request *Request) handlerRouter {
+	// windows下的路径\转成/
+	path = strings.Replace(path, "\\", "/", -1)
 	if filepath.Clean(path) != "/" && strings.LastIndex(path, "/") == len(path)-1 {
 		//path == "/a/b/c/" 去除最后的"/"在进行比较
 		path = path[:len(path)-1]

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
-	"github.com/hypwxm/rider/modules"
 	"net/http"
+	"rider"
+
+	"github.com/hypwxm/rider/modules"
 )
 
 func main() {

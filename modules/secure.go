@@ -1,7 +1,7 @@
 package modules
 
 import (
-	"github.com/hypwxm/rider"
+	"rider"
 )
 
 type SecureConfig struct {

@@ -1,12 +1,12 @@
 package rider
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 )
 
 //实现一个http.ResponseWriter
-type riderWriter struct {}
+type riderWriter struct{}
 
 type wbuff struct {
 	body []byte
@@ -31,4 +31,3 @@ func (rw *riderWriter) Write(b []byte) (int, error) {
 func (rw *riderWriter) WriteHeader(i int) {
 	fmt.Fprint(wf, i)
 }
-

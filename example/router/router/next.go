@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/hypwxm/rider"
+	"rider"
 )
 
 func Router3() *rider.Router {

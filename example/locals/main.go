@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
+	"rider"
+
 	"github.com/hypwxm/rider/example/locals/router"
 )
 

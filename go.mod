@@ -1,3 +1,3 @@
-module "github.com/hypwxm/rider"
+module rider
 
-require "github.com/dgrijalva/jwt-go" v1.0.2
+require github.com/hypwxm/rider v1.0.22

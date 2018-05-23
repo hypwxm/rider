@@ -2,7 +2,7 @@ package subMiddle
 
 import (
 	"fmt"
-	"github.com/hypwxm/rider"
+	"rider"
 )
 
 func RouterSub3() *rider.Router {

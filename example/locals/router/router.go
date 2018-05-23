@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"github.com/hypwxm/rider"
+	"rider"
 )
 
 func Router() *rider.Router {

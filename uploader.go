@@ -4,11 +4,12 @@ package rider
 
 import (
 	"errors"
-	"github.com/hypwxm/rider/utils/file"
 	"io"
 	"mime/multipart"
 	"os"
 	"strings"
+
+	"github.com/hypwxm/rider/utils/file"
 )
 
 type UploadFile struct {

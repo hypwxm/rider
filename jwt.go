@@ -1,10 +1,12 @@
 package rider
 
 import (
-	jwtgo "github.com/dgrijalva/jwt-go"
-	"github.com/hypwxm/rider/jwt"
 	"net/http"
 	"time"
+
+	"github.com/hypwxm/rider/jwt"
+
+	jwtgo "github.com/dgrijalva/jwt-go"
 )
 
 type riderJwter struct {

@@ -3,8 +3,6 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"github.com/hypwxm/rider/smtp/FlyWhisper"
-	"github.com/hypwxm/rider/utils/file"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +11,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/hypwxm/rider/smtp/FlyWhisper"
+	"github.com/hypwxm/rider/utils/file"
 )
 
 const (

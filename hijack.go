@@ -1,19 +1,19 @@
 package rider
 
 import (
-	"net"
 	"bufio"
-	"strings"
-	"strconv"
+	"net"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 type HijackUp struct {
-	conn net.Conn
-	bufrw *bufio.ReadWriter
-	header http.Header   //header引用了转换成hijack之前的response的header，
+	conn   net.Conn
+	bufrw  *bufio.ReadWriter
+	header http.Header //header引用了转换成hijack之前的response的header，
 	status int
-	Size int64
+	Size   int64
 }
 
 //添加默认的响应头

@@ -3,12 +3,13 @@ package rider
 import (
 	"errors"
 	"fmt"
-	"github.com/hypwxm/rider/utils/file"
 	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/hypwxm/rider/utils/file"
 )
 
 var (

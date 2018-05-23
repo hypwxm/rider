@@ -33,39 +33,40 @@ jti(JWT ID)：是JWT的唯一标识。
 */
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	"fmt"
 	"errors"
+	"fmt"
 	"time"
+
+	jwtgo "github.com/dgrijalva/jwt-go"
 )
 
 type Jwter struct {
-	SecretKey string
+	SecretKey   string
 	TokenString string
-	Expires time.Time
-	Claims jwt.MapClaims
+	Expires     time.Time
+	Claims      jwtgo.MapClaims
 }
 
 func NewJWTer(secretKey string, expires time.Duration) *Jwter {
 	j := &Jwter{
 		SecretKey: secretKey,
-		Expires: time.Now().Add(expires),
-		Claims: make(map[string]interface{}),
+		Expires:   time.Now().Add(expires),
+		Claims:    make(map[string]interface{}),
 	}
 	return j
 }
 
-//data中的expires字段会被忽略，使用初始化时设置的Expires
+//data中的expires字段会被忽略，使用初始化时设置的Expires//
 func (j *Jwter) CreateJwt(data map[string]interface{}) (string, error) {
 	if j.Claims == nil {
-		j.Claims = make(jwt.MapClaims)
+		j.Claims = make(jwtgo.MapClaims)
 	}
 	for k, v := range data {
 		j.Claims[k] = v
 	}
 	//设置过期时间
 	j.Claims["exp"] = j.Expires
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, j.Claims)
+	token := jwtgo.NewWithClaims(jwtgo.SigningMethodHS256, j.Claims)
 	tokenString, err := token.SignedString([]byte(j.SecretKey))
 	if err != nil {
 		fmt.Println("Error while signing the token")
@@ -90,19 +91,19 @@ func (j *Jwter) Delete(key string) (string, error) {
 }
 
 //验证客服端token可用性
-func ValidateToken(tokenString string, secretKey string) (jwt.MapClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{},
-		func(token *jwt.Token) (interface{}, error) {
+func ValidateToken(tokenString string, secretKey string) (jwtgo.MapClaims, error) {
+	token, err := jwtgo.ParseWithClaims(tokenString, jwtgo.MapClaims{},
+		func(token *jwtgo.Token) (interface{}, error) {
 			return []byte(secretKey), nil
 		},
 	)
 
 	if !token.Valid {
 		return nil, errors.New("invalid token")
-	} else if ve, ok := err.(*jwt.ValidationError); ok {
-		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+	} else if ve, ok := err.(*jwtgo.ValidationError); ok {
+		if ve.Errors&jwtgo.ValidationErrorMalformed != 0 {
 			return nil, errors.New("That's not even a token. ")
-		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+		} else if ve.Errors&(jwtgo.ValidationErrorExpired|jwtgo.ValidationErrorNotValidYet) != 0 {
 			// Token is either expired or not active yet
 			return nil, errors.New("Token is either expired or not active yet. ")
 		} else {
@@ -110,7 +111,7 @@ func ValidateToken(tokenString string, secretKey string) (jwt.MapClaims, error) 
 		}
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwtgo.MapClaims)
 
 	if !ok {
 		return nil, errors.New("invalid token")
@@ -119,7 +120,7 @@ func ValidateToken(tokenString string, secretKey string) (jwt.MapClaims, error) 
 }
 
 //获取claims里面的参数
-func (j *Jwter) GetTokenClaims() (jwt.MapClaims, error) {
+func (j *Jwter) GetTokenClaims() (jwtgo.MapClaims, error) {
 	claims, err := ValidateToken(j.TokenString, j.SecretKey)
 	if err != nil {
 		return nil, err

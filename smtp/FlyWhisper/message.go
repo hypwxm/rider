@@ -2,10 +2,11 @@ package FlyWhisper
 
 import (
 	"errors"
-	"github.com/hypwxm/rider/utils/cryptos"
 	"mime"
 	"path/filepath"
 	"strings"
+
+	"github.com/hypwxm/rider/utils/cryptos"
 )
 
 //定义发送的内容

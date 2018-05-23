@@ -1,35 +1,31 @@
 package rider
 
 import (
-	"time"
 	"net/http"
+	"time"
 )
 
 type ConfigHeaders struct {
 
-
 	//其他默认响应头
-	Server string   //rider
-	Date string  //time.Now().UTC().Format(http.TimeFormat)
+	Server string //rider
+	Date   string //time.Now().UTC().Format(http.TimeFormat)
 }
 
 type Config struct {
-	ConfigHeaders *ConfigHeaders
+	ConfigHeaders  *ConfigHeaders
 	EnableWeakEtag bool
 }
 
-
 var DefaultConfigHeaders *ConfigHeaders = &ConfigHeaders{
 	Server: "rider",
-	Date: time.Now().UTC().Format(http.TimeFormat),
+	Date:   time.Now().UTC().Format(http.TimeFormat),
 }
-
 
 var DefaultConfig *Config = &Config{
-	ConfigHeaders: DefaultConfigHeaders,
+	ConfigHeaders:  DefaultConfigHeaders,
 	EnableWeakEtag: true,
 }
-
 
 const (
 	Server = "rider"

@@ -14,8 +14,6 @@ package rider
 
 import (
 	ctxt "context"
-	"github.com/hypwxm/rider/logger"
-	"github.com/hypwxm/rider/utils/file"
 	"html/template"
 	"net/http"
 	"os"
@@ -24,6 +22,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/hypwxm/rider/logger"
+	"github.com/hypwxm/rider/utils/file"
 )
 
 const (

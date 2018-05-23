@@ -1,11 +1,11 @@
 package rider
 
 import (
-	"testing"
-	"net/http"
-	"net"
 	"bufio"
+	"net"
+	"net/http"
 	"os"
+	"testing"
 )
 
 func TestAddHeader(t *testing.T) {
@@ -52,7 +52,6 @@ func TestHeaderValue(t *testing.T) {
 	}
 }
 
-
 func TestSetStatusCode(t *testing.T) {
 	hj := &HijackUp{}
 	hj.WriteHeader(404)
@@ -63,7 +62,7 @@ func TestSetStatusCode(t *testing.T) {
 
 func TestSetCookie(t *testing.T) {
 	hj := &HijackUp{}
-	hj.SetCookie(http.Cookie{Name:"test", Value: "test"})
+	hj.SetCookie(http.Cookie{Name: "test", Value: "test"})
 	header := hj.Header()
 	cookies := header["Set-Cookie"]
 	if cookies[0] != "test=test" {
@@ -85,6 +84,7 @@ func TestSetContentType(t *testing.T) {
 }
 
 type myHijack struct{}
+
 func (mh *myHijack) Header() http.Header {
 	return nil
 }

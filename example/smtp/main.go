@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/hypwxm/rider/smtp/FlyWhisper"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/hypwxm/rider/smtp/FlyWhisper"
 )
 
 func main() {
@@ -17,10 +18,10 @@ func main() {
 	mess.AddRcpt([]string{"1972650704@qq.com"})
 	mess.RemoveRcpt("1825909531@qq.com")
 	mess.SetHtml("<p style='font-size:30px;'>youjian</p>")
-	//mess.AddInline(filepath.Join(wd, "src/rider/example/smtp/test.png"))
-	//mess.AddInline(filepath.Join(wd, "src/rider/example/smtp/test.png"))
-	mess.AddAttach(filepath.Join(wd, "src/rider/example/smtp/test.png"))
-	//mess.AddAttach(filepath.Join(wd, "src/rider/example/smtp/54cc82980afd9.ai"))
+	//mess.AddInline(filepath.Join(wd, "src/github.com/hypwxm/rider/example/smtp/test.png"))
+	//mess.AddInline(filepath.Join(wd, "src/github.com/hypwxm/rider/example/smtp/test.png"))
+	mess.AddAttach(filepath.Join(wd, "src/github.com/hypwxm/rider/example/smtp/test.png"))
+	//mess.AddAttach(filepath.Join(wd, "src/github.com/hypwxm/rider/example/smtp/54cc82980afd9.ai"))
 
 	mess.RemoveHtml()
 	mess.RemoveInline()

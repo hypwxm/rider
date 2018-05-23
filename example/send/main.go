@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
+	"rider"
 )
 
 func main() {

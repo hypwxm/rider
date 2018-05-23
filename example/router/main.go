@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/hypwxm/rider"
-	//user2 "rider/example/router2"
+	"rider"
+	//user2 "github.com/hypwxm/rider/example/router2"
 	"flag"
 	"fmt"
-	"github.com/hypwxm/rider/example/router/router"
 	"os"
 	"runtime/pprof"
+
+	"github.com/hypwxm/rider/example/router/router"
 )
 
 type pint int
