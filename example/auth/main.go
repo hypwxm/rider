@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"rider"
+
+	"github.com/hypwxm/rider"
 )
 
 func main() {

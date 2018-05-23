@@ -37,7 +37,7 @@ import (
 	"fmt"
 	"time"
 
-	jwtgo "github.com/dgrijalva/jwt-go"
+	jwtgo "github.com/hypwxm/jwt-go"
 )
 
 type Jwter struct {

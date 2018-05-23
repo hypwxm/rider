@@ -6,7 +6,7 @@ import (
 
 	"github.com/hypwxm/rider/jwt"
 
-	jwtgo "github.com/dgrijalva/jwt-go"
+	jwtgo "github.com/hypwxm/jwt-go"
 )
 
 type riderJwter struct {
