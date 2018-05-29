@@ -10,12 +10,13 @@ import (
 )
 
 type HttpServer struct {
-	openRender bool
-	tplDir     string
-	tplExtName string
-	funcMap    template.FuncMap
-	tplsRender BaseRender
-	logger     *logger.LogQueue
+	openRender    bool
+	tplDir        string
+	tplExtName    string
+	funcMap       template.FuncMap
+	tplsRender    BaseRender
+	logger        *logger.LogQueue
+	accessControl func(Context) *AccessControl
 }
 
 type ErrorHandler interface {

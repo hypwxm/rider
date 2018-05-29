@@ -200,6 +200,9 @@ type Context interface {
 
 	//负责模板渲染 ，只要实现了BaseRender，注册app服务是直接修改tplsRender的值
 	Render(tplName string, data interface{})
+
+	// 获取httpserver实例
+	getHttpServer() *HttpServer
 }
 
 var (
@@ -784,4 +787,9 @@ func (c *context) Download(fileName string, name string, typ string) error {
 	c.SetHeader("Content-Disposition", typ+";filename="+name)
 	c.SendFile(fileName)
 	return nil
+}
+
+// 获取服务实例
+func (c *context) getHttpServer() *HttpServer {
+	return c.server
 }

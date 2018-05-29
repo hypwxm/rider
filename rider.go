@@ -340,3 +340,8 @@ func (r *rider) Logger(level int) *logger.LogQueue {
 func (r *rider) GetLogger() *logger.LogQueue {
 	return r.server.logger
 }
+
+// 设置跨域信息
+func (r *rider) SetAccessCtl(access func(c Context) *AccessControl) {
+	r.server.accessControl = access
+}

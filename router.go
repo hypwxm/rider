@@ -188,6 +188,25 @@ func (h handlerRouter) riderServeHTTP(context Context) {
 	//请求的http方法
 	reqMethod := req.Method()
 
+	// 此部分为跨域设置（要在option之前做处理，不然patch，put等请求不能绕过option请求会导致跨域失败）
+	httpserver := context.getHttpServer()
+	access := httpserver.accessControl(context)
+	if access.AccessControlAllowCredentials != "" {
+		context.SetHeader("Access-Control-Allow-Credentials", access.AccessControlAllowCredentials)
+	}
+
+	if access.AccessControlAllowHeaders != "" {
+		context.SetHeader("Access-Control-Allow-Headers", access.AccessControlAllowHeaders)
+	}
+
+	if access.AccessControlAllowMethods != "" {
+		context.SetHeader("Access-Control-Allow-Methods", access.AccessControlAllowMethods)
+	}
+
+	if access.AccessControlAllowOrigin != "" {
+		context.SetHeader("Access-Control-Allow-Origin", access.AccessControlAllowOrigin)
+	}
+
 	//处理options
 	if strings.ToUpper(reqMethod) == http.MethodOptions {
 		allows := h.allow(reqPath)

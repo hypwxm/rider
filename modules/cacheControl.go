@@ -1,10 +1,11 @@
 package modules
 
 import (
-	"rider"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/hypwxm/rider"
 )
 
 /*
