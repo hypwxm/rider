@@ -88,7 +88,7 @@ func (lc *logCon) setPrefix(prefix ...string) {
 }
 
 func (lc *logCon) String() string {
-	return fmt.Sprintf("%s", lc.Message)
+	return fmt.Sprintf("%v", lc.Message)
 }
 
 //添加日志队列
@@ -171,7 +171,7 @@ func (lq *LogQueue) FATAL(message ...interface{}) {
 	lc.setPrefix("FATAL")
 	for _, mess := range lc.Message {
 		lc.ColorMessageStr += WhiteText(RedAntiWhiteText(mess)) + " "
-		lc.MessageStr += fmt.Sprintf("%s", mess) + " "
+		lc.MessageStr += fmt.Sprintf("%v", mess) + " "
 	}
 	lq.intoQueue(lc, fatalLevel)
 	time.Sleep(100 * time.Microsecond)
@@ -183,7 +183,7 @@ func (lq *LogQueue) ERROR(message ...interface{}) {
 	lc.setPrefix("ERROR")
 	for _, mess := range lc.Message {
 		lc.ColorMessageStr += RedText(mess) + " "
-		lc.MessageStr += fmt.Sprintf("%s", mess) + " "
+		lc.MessageStr += fmt.Sprintf("%v", mess) + " "
 	}
 	lq.intoQueue(lc, errorLevel)
 }
@@ -193,7 +193,7 @@ func (lq *LogQueue) WARNING(message ...interface{}) {
 	lc.setPrefix("WARNING")
 	for _, mess := range lc.Message {
 		lc.ColorMessageStr += YellowText(mess) + " "
-		lc.MessageStr += fmt.Sprintf("%s", mess) + " "
+		lc.MessageStr += fmt.Sprintf("%v", mess) + " "
 	}
 	lq.intoQueue(lc, warningLevel)
 }
@@ -203,7 +203,7 @@ func (lq *LogQueue) INFO(message ...interface{}) {
 	lc.setPrefix("INFO")
 	for _, mess := range lc.Message {
 		lc.ColorMessageStr += GreenText(mess) + " "
-		lc.MessageStr += fmt.Sprintf("%s", mess) + " "
+		lc.MessageStr += fmt.Sprintf("%v", mess) + " "
 	}
 	lq.intoQueue(lc, infoLevel)
 }
@@ -232,7 +232,7 @@ func (lq *LogQueue) DEBUG(message ...interface{}) (*logCon, error) {
 		lc.Message = append(lc.Message, originMess)
 		for _, mess := range lc.Message {
 			lc.ColorMessageStr += BlueBoldText(mess) + " "
-			lc.MessageStr += fmt.Sprintf("%s", mess) + " "
+			lc.MessageStr += fmt.Sprintf("%v", mess) + " "
 		}
 		lq.loggers <- lc
 		return lc, nil
@@ -254,7 +254,7 @@ func (lq *LogQueue) PANIC(message ...interface{}) (*logCon, error) {
 		lc.Message = append(lc.Message, "\r\n", debug.Stack(), "\r\n---")
 		for _, mess := range lc.Message {
 			lc.ColorMessageStr += RedBoldText(mess) + " "
-			lc.MessageStr += fmt.Sprintf("%s", mess) + " "
+			lc.MessageStr += fmt.Sprintf("%v", mess) + " "
 		}
 		lq.loggers <- lc
 		return lc, nil
