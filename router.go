@@ -190,8 +190,8 @@ func (h handlerRouter) riderServeHTTP(context Context) {
 
 	// 此部分为跨域设置（要在option之前做处理，不然patch，put等请求不能绕过option请求会导致跨域失败）
 	httpserver := context.getHttpServer()
-	access := httpserver.accessControl(context)
-	if access != nil {
+	if httpserver.accessControl != nil {
+		access := httpserver.accessControl(context)
 		if access.AccessControlAllowCredentials != "" {
 			context.SetHeader("Access-Control-Allow-Credentials", access.AccessControlAllowCredentials)
 		}
