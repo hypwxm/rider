@@ -19,7 +19,20 @@ func RiderJwt(secret string, expires time.Duration) HandlerFunc {
 	return func(c Context) {
 		rj := &riderJwter{context: c, expires: expires}
 		c.setJwt(rj)
-		if token, err := c.CookieValue("token"); err == nil {
+
+		// 如果是app进行的请求，token回放在请求头里面，headers的token优先级大于cookie，所以先验证headers
+		if token := c.HeaderValue("token"); token != "" {
+			claims, err := jwt.ValidateToken(token, secret)
+			if err == nil {
+				//token通过验证
+				//这里即使初始化了expires，但是不set，delete，对token重新赋值，expires不会起作用
+				rj.jwt = jwt.NewJWTer(secret, expires)
+				rj.jwt.TokenString = token
+				rj.jwt.Claims = claims
+				c.Next()
+				return
+			}
+		} else if token, err := c.CookieValue("token"); err == nil {
 			//如果cookie里面存在token，验证token
 			claims, err := jwt.ValidateToken(token, secret)
 			if err == nil {
@@ -78,12 +91,13 @@ func (rj *riderJwter) Delete(key string) (string, error) {
 }
 
 //获取token中的信息，payload
-func (rj *riderJwter) Claims() (jwtgo.MapClaims, error) {
+func (rj *riderJwter) Values() (jwtgo.MapClaims, error) {
 	return rj.jwt.GetTokenClaims()
 }
 
-//获取claims中指定字段的值
-func (rj *riderJwter) ClaimsValue(key string) interface{} {
+// 获取claims中指定字段的值
+// token验证已在请求进来时RiderJwt中进行验证了，所以这里可以直接取值
+func (rj *riderJwter) Get(key string) interface{} {
 	if rj.jwt.Claims == nil {
 		return nil
 	}
@@ -97,4 +111,9 @@ func (rj *riderJwter) ClaimsValue(key string) interface{} {
 func (rj *riderJwter) DeleteAll() (string, error) {
 	rj.jwt.Claims = make(jwtgo.MapClaims)
 	return rj.SetTokenCookie(rj.jwt.Claims)
+}
+
+// 获取riderjwt上的token
+func (rj *riderJwter) GetToken() string {
+	return rj.jwt.TokenString
 }
