@@ -203,6 +203,9 @@ type Context interface {
 
 	// 获取httpserver实例
 	getHttpServer() *HttpServer
+
+	// 获取请求来源host
+	Host() string
 }
 
 var (
@@ -792,4 +795,9 @@ func (c *context) Download(fileName string, name string, typ string) error {
 // 获取服务实例
 func (c *context) getHttpServer() *HttpServer {
 	return c.server
+}
+
+// 获取请求来源host
+func (c *context) Host() string {
+	return c.request.Req().Host
 }
