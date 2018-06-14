@@ -204,7 +204,7 @@ type Context interface {
 	// 获取httpserver实例
 	getHttpServer() *HttpServer
 
-	// 获取请求来源host
+	// 获取服务主机
 	Host() string
 }
 
@@ -461,10 +461,10 @@ func (c *context) FormValue(key string) string {
 
 // formstring返回空时提供提供一个默认值
 func (c *context) FormDefault(key string, def string) string {
-	if c.BodyValue(key) == "" {
+	if c.FormValue(key) == "" {
 		return def
 	} else {
-		return c.BodyValue(key)
+		return c.FormValue(key)
 	}
 }
 
