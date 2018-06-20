@@ -27,6 +27,10 @@ func NewResponse(w http.ResponseWriter, server *HttpServer) (r *Response) {
 	return response.load(w, server)
 }
 
+func (r *Response) Res() http.ResponseWriter {
+	return r.writer
+}
+
 func (r *Response) Header() http.Header {
 	return r.header
 }
