@@ -262,6 +262,11 @@ func (r *rider) GetServer() *HttpServer {
 	return r.server
 }
 
+// 返回http.Server供自定义
+func (r *rider) GetHttpServer() *http.Server {
+	return r.appServer
+}
+
 //为app服务添加中间处理
 func (r *rider) USE(handlers ...HandlerFunc) {
 	r.routers.Middleware = append(r.routers.Middleware, handlers...)
