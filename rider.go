@@ -96,7 +96,8 @@ func New() *rider {
 		server:  server,
 		routers: newRootRouter(server),
 	}
-	app.appServer = &http.Server{Handler: app.routers}
+	http.Handle("/", app.routers)
+	app.appServer = &http.Server{Handler: http.DefaultServeMux}
 	//默认日志等级5 consoleLevel
 	//日志会默认初始化，调用app.Logger(int)可以改变日志的输出等级
 	app.server.logger = logger.NewLogger()

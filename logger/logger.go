@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	defaultLogLevel       = consoleLevel
-	fatalLevel      uint8 = iota
+	fatalLevel uint8 = iota
 	panicLevel
 	errorLevel
 	warningLevel
@@ -26,6 +25,7 @@ const (
 	consoleLevel
 	debugLevel
 )
+const defaultLogLevel = consoleLevel
 
 type logOrigin struct {
 	fileName string
