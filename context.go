@@ -5,7 +5,6 @@ import (
 	// ctxt "context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -759,12 +758,13 @@ func (c *context) SendFile(path string) error {
 
 	c.response.Size = fi.Size()
 
-	chunk, err := ioutil.ReadAll(fp)
+	// 此处304交由servecontent去处理，readall会把fp读空，会导致一些bug，比如视频无法正常响应播放
+	/* chunk, err := ioutil.ReadAll(fp)
 
 	if setWeakEtag(c, chunk, c.request.request) {
 		c.Send(304, []byte(""))
 		return nil
-	}
+	} */
 
 	if c.isHijack {
 		http.ServeContent(c.hijacker, c.request.request, fi.Name(), fi.ModTime(), fp)
