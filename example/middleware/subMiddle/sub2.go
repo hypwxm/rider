@@ -2,7 +2,8 @@ package subMiddle
 
 import (
 	"fmt"
-	"rider"
+
+	"github.com/hypwxm/rider"
 )
 
 func mid2() rider.HandlerFunc {

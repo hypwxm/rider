@@ -10,7 +10,7 @@
 *	8: 支持无限极子路由，会一层一层的检测，当前层是否会有1，2情况的发生。如有1，2的情况发生，请注意错误，不会定位到完整路由。
 */
 
-package rider
+package rider // import "github.com/hypwxm/rider"
 
 import (
 	ctxt "context"
@@ -98,10 +98,10 @@ func New() *rider {
 	}
 	http.Handle("/", app.routers)
 	app.appServer = &http.Server{Handler: http.DefaultServeMux}
-	//默认日志等级5 consoleLevel
+	//默认日志等级3 warnLevel
 	//日志会默认初始化，调用app.Logger(int)可以改变日志的输出等级
 	app.server.logger = logger.NewLogger()
-	app.server.logger.SetLevel(5)
+	app.server.logger.SetLevel(3)
 	return app
 }
 
@@ -350,4 +350,9 @@ func (r *rider) GetLogger() *logger.LogQueue {
 // 设置跨域信息
 func (r *rider) SetAccessCtl(access func(c Context) *AccessControl) {
 	r.server.accessControl = access
+}
+
+// 请求处理完成，自定义事件（比如自定义日志打印，自定义日志库）
+func (r *rider) AfterHttpResponse(ahf func(Context, int, time.Duration)) {
+	afterHttpResponse = ahf
 }

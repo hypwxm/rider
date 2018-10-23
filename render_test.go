@@ -7,8 +7,9 @@ import (
 	"testing"
 )
 
+var app = New()
+
 func TestRegisterTpl(t *testing.T) {
-	app := New()
 	wd, _ := os.Getwd()
 	if tplsRender, ok := app.GetServer().tplsRender.(*render); ok {
 		tplsRender.registerTpl(filepath.Join(wd, "test/views"), "tpl", template.FuncMap{}, "")
@@ -26,7 +27,6 @@ func TestRegisterTpl(t *testing.T) {
 }
 
 func TestRender(t *testing.T) {
-	app := New()
 	wd, _ := os.Getwd()
 	app.SetViews(filepath.Join(wd, "test/views"), "tpl", template.FuncMap{})
 
