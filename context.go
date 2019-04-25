@@ -76,14 +76,17 @@ type Context interface {
 	// 当query不存在某一字段的值时，返回一个默认的值
 	QueryDefault(key string, def string) string
 
-	//只获取请求体内的请求参数，
-	Body() url.Values
+	// 获取请求其
+	Body() []byte
+
+	//只获取post，put等的请求参数，
+	PostForm() url.Values
 
 	//根据字段名直接查询"请求体"某中个字段名对应的值
-	BodyValue(key string) string
+	PostFormValue(key string) string
 
-	// 当body不存在某一字段的值时，返回一个默认的值
-	BodyDefault(key string, def string) string
+	// 当post参数不存在某一字段的值时，返回一个默认的值
+	PostFormDefault(key string, def string) string
 
 	// 返回请求的参数（包括query和body的）
 	Form() url.Values
@@ -229,7 +232,8 @@ type context struct {
 	jwt       *riderJwter            //用于存储jwt
 	locals    map[string]interface{} //用户存储locals的变量，用户输出给模板时调用，对该变量的所有操作都未加锁，如需多协程读写，请自行加锁
 	query     url.Values             //存放请求查询参数
-	body      url.Values             //存放请求体内的字段（不包含get查询参数字段）
+	body      []byte                 //整个请求体（application/json）
+	postForm  url.Values             //存放请求体内的字段（不包含get查询参数字段,application/x-www-form-urlencoded）
 	form      url.Values             //存放请求参数（包含get，post，put）
 }
 
@@ -275,6 +279,7 @@ func (c *context) reset(w *Response, r *Request, server *HttpServer) *context {
 	//go c.timeout()
 	c.query = c.request.query()
 	c.body = c.request.body()
+	c.postForm = c.request.postForm()
 	c.form = c.request.form()
 	return c
 }
@@ -297,6 +302,7 @@ func (c *context) release() {
 	c.locals = nil
 	c.query = nil
 	c.body = nil
+	c.postForm = nil
 	c.form = nil
 }
 
@@ -430,22 +436,27 @@ func (c *context) QueryDefault(key string, def string) string {
 }
 
 //获取request请求体  map[string][]string
-func (c *context) Body() url.Values {
-	return c.body
+func (c *context) PostForm() url.Values {
+	return c.postForm
 }
 
 //根据key查询body里面的某一字段的第一个值
-func (c *context) BodyValue(key string) string {
-	return c.body.Get(key)
+func (c *context) PostFormValue(key string) string {
+	return c.postForm.Get(key)
 }
 
 // QueryString返回空时提供提供一个默认值
-func (c *context) BodyDefault(key string, def string) string {
-	if c.BodyValue(key) == "" {
+func (c *context) PostFormDefault(key string, def string) string {
+	if c.PostFormValue(key) == "" {
 		return def
 	} else {
-		return c.BodyValue(key)
+		return c.PostFormValue(key)
 	}
+}
+
+// 获取请求体
+func (c *context) Body() []byte {
+	return c.body
 }
 
 //根据key查询请求参数（包含get，post，put的所有字段）

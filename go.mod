@@ -1,3 +1,5 @@
 module rider
 
-require github.com/hypwxm/rider v1.1.1
+go 1.12
+
+require github.com/hypwxm/jwt-go v3.2.1+incompatible

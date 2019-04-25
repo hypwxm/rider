@@ -178,10 +178,17 @@ func (req *Request) HeaderValue(key string) string {
 	return req.request.Header.Get(key)
 }
 
-//获取请求体body内容 url.Value，，
-func (req *Request) body() url.Values {
+// 获取application/x-www-form-urlencoded的post请求参数
+func (req *Request) postForm() url.Values {
 	req.parseForm()
 	return req.request.PostForm
+}
+
+//获取请求体body内容 application/json
+func (req *Request) body() []byte {
+	var body []byte
+	req.request.Body.Read(body)
+	return body
 }
 
 //RemoteAddr to an "IP" address
