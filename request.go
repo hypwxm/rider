@@ -2,6 +2,7 @@ package rider
 
 import (
 	"errors"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -187,7 +188,7 @@ func (req *Request) postForm() url.Values {
 //获取请求体body内容 application/json
 func (req *Request) body() []byte {
 	var body []byte
-	req.request.Body.Read(body)
+	body, _ = ioutil.ReadAll(req.request.Body)
 	return body
 }
 
