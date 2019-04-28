@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"rider"
 	"time"
+
+	"github.com/hypwxm/rider"
 )
 
 func main() {
@@ -23,8 +24,9 @@ func main() {
 		c.Jwt().Delete("test")
 		c.Jwt().DeleteAll()
 		c.Jwt().Set("a", "b")
-		fmt.Println(c.Jwt().Claims())
-		fmt.Println(c.Jwt().ClaimsValue("a"))
+		fmt.Println(c.Jwt().Values())
+		fmt.Println(c.Jwt().Get("a"))
+		fmt.Println(c.Jwt().GetToken())
 	})
 	app.Listen(":5002")
 }
