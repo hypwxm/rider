@@ -278,7 +278,7 @@ func (c *context) reset(w *Response, r *Request, server *HttpServer) *context {
 	//c.ctx, c.cancel = ctxt.WithTimeout(ctxt.Background(), writerTimeout)
 	//go c.timeout()
 	c.query = c.request.query()
-	c.body = c.request.body()
+	// c.body = c.request.body()  // 改为调用了c.Body()才会设置
 	c.postForm = c.request.postForm()
 	c.form = c.request.form()
 	return c
@@ -456,6 +456,9 @@ func (c *context) PostFormDefault(key string, def string) string {
 
 // 获取请求体
 func (c *context) Body() []byte {
+	if c.body == nil {
+		c.body = c.request.body()
+	}
 	return c.body
 }
 
