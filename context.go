@@ -2,7 +2,6 @@ package rider
 
 import (
 	"container/list"
-	"log"
 	// ctxt "context"
 	"encoding/json"
 	"errors"
@@ -827,7 +826,6 @@ func (c *context) Host() string {
 }
 
 func (c *context) setTimeCost(cost string) {
-	log.Println(cost)
 	c.timeCost = cost
 }
 
