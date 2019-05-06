@@ -169,6 +169,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		//记录http请求耗时
 		routerEnd := time.Now()
 		routerDuration := routerEnd.Sub(routerStart)
+		ctx.setTimeCost(routerDuration.String())
 		afterHttpResponse(ctx, statusCode, routerDuration)
 		logger.HttpLogger(r.GetServer().logger, ctx.Method(), ctx.Request().RequestURI(), statusCode, routerDuration, ctx.RequestID())
 		releaseContext(ctx)

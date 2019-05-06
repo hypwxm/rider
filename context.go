@@ -2,6 +2,7 @@ package rider
 
 import (
 	"container/list"
+	"log"
 	// ctxt "context"
 	"encoding/json"
 	"errors"
@@ -152,6 +153,12 @@ type Context interface {
 	//获取响应的状态码
 	Status() int
 
+	// 设置请求花费的时间
+	setTimeCost(cost string)
+
+	// 获取请求花费时间
+	GetTimeCost() string
+
 	//将http请求升级为hijack，hijack的信息保存在HijackUp中
 	Hijack() (*HijackUp, error)
 
@@ -235,6 +242,7 @@ type context struct {
 	body      []byte                 //整个请求体（application/json）
 	postForm  url.Values             //存放请求体内的字段（不包含get查询参数字段,application/x-www-form-urlencoded）
 	form      url.Values             //存放请求参数（包含get，post，put）
+	timeCost  string                 // 请求花费时间
 }
 
 func newContext(w http.ResponseWriter, r *http.Request, server *HttpServer) Context {
@@ -281,6 +289,7 @@ func (c *context) reset(w *Response, r *Request, server *HttpServer) *context {
 	// c.body = c.request.body()  // 改为调用了c.Body()才会设置
 	c.postForm = c.request.postForm()
 	c.form = c.request.form()
+	c.timeCost = ""
 	return c
 }
 
@@ -304,6 +313,7 @@ func (c *context) release() {
 	c.body = nil
 	c.postForm = nil
 	c.form = nil
+	c.timeCost = ""
 }
 
 //处理下一个中间件
@@ -814,4 +824,13 @@ func (c *context) getHttpServer() *HttpServer {
 // 获取请求来源host
 func (c *context) Host() string {
 	return c.request.Req().Host
+}
+
+func (c *context) setTimeCost(cost string) {
+	log.Println(cost)
+	c.timeCost = cost
+}
+
+func (c *context) GetTimeCost() string {
+	return c.timeCost
 }
