@@ -60,7 +60,7 @@ type baseRider interface {
 }
 
 //http服务的入口，用户初始化和缓存服务的一些信息
-type rider struct {
+type Rider struct {
 	server    *HttpServer //注册服务用的serveMu，全局统一
 	routers   *Router
 	appServer *http.Server
@@ -90,9 +90,9 @@ func SetEnvDebug() {
 }
 
 //初始化服务入口组建
-func New() *rider {
+func New() *Rider {
 	server := newHttpServer()
-	app := &rider{
+	app := &Rider{
 		server:  server,
 		routers: newRootRouter(server),
 	}
@@ -115,7 +115,7 @@ func newRootRouter(server *HttpServer) *Router {
 }
 
 //提供端口监听服务，监听rider里面的serveMux,调用http自带的服务启用方法
-func (r *rider) Listen(port string) (err error) {
+func (r *Rider) Listen(port string) (err error) {
 	if port == "" {
 		port = addr
 	}
@@ -133,7 +133,7 @@ func (r *rider) Listen(port string) (err error) {
 	return
 }
 
-func (r *rider) Graceful(port string) {
+func (r *Rider) Graceful(port string) {
 	ch := make(chan os.Signal)
 	var err error
 	go func() {
@@ -148,14 +148,14 @@ func (r *rider) Graceful(port string) {
 	time.Sleep(300 * time.Microsecond)
 }
 
-func (r *rider) Routers() *Router {
+func (r *Rider) Routers() *Router {
 	return r.routers
 }
 
 //http请求的方法的入口（ANY, GET, POST...VIA）
 //path：一个跟路径，函数内部根据这个根路径创建一个根路由routers，用来管理router子路由
 //router：这个根路径对应的子路由入口。
-func (r *rider) addRiderRouter(method string, path string, handlers ...HandlerFunc) {
+func (r *Rider) addRiderRouter(method string, path string, handlers ...HandlerFunc) {
 	//将app的中间处理函数传给routers根路由(后面再由routers传给其各个子路由)
 	//r.routers.FrontMiddleware(r.Middleware...)
 	//将服务注入这个组建根路由，确保路由是创立在这个服务上
@@ -188,7 +188,7 @@ func (r *rider) addRiderRouter(method string, path string, handlers ...HandlerFu
 }
 
 //router：这个根路径对应的子路由入口。
-func (r *rider) addChildRouter(path string, router ...IsRouterHandler) {
+func (r *Rider) addChildRouter(path string, router ...IsRouterHandler) {
 
 	if len(router) == 0 {
 		r.server.logger.FATAL("nothing todo with no handler router")
@@ -214,74 +214,74 @@ func (r *rider) addChildRouter(path string, router ...IsRouterHandler) {
 	r.routers.Kid(path, router...)
 }
 
-func (r *rider) Kid(path string, middleware ...IsRouterHandler) {
+func (r *Rider) Kid(path string, middleware ...IsRouterHandler) {
 	r.addChildRouter(path, middleware...)
 }
 
-func (r *rider) ANY(path string, handlers ...HandlerFunc) {
+func (r *Rider) ANY(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("ANY", path, handlers...)
 }
 
-func (r *rider) GET(path string, handlers ...HandlerFunc) {
+func (r *Rider) GET(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("GET", path, handlers...)
 }
 
-func (r *rider) POST(path string, handlers ...HandlerFunc) {
+func (r *Rider) POST(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("POST", path, handlers...)
 }
 
-func (r *rider) HEAD(path string, handlers ...HandlerFunc) {
+func (r *Rider) HEAD(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("HEAD", path, handlers...)
 }
 
-func (r *rider) OPTIONS(path string, handlers ...HandlerFunc) {
+func (r *Rider) OPTIONS(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("OPTIONS", path, handlers...)
 }
 
-func (r *rider) DELETE(path string, handlers ...HandlerFunc) {
+func (r *Rider) DELETE(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("DELETE", path, handlers...)
 }
 
-func (r *rider) PUT(path string, handlers ...HandlerFunc) {
+func (r *Rider) PUT(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("PUT", path, handlers...)
 }
 
-func (r *rider) PATCH(path string, handlers ...HandlerFunc) {
+func (r *Rider) PATCH(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("PATCH", path, handlers...)
 }
 
-func (r *rider) TRACE(path string, handlers ...HandlerFunc) {
+func (r *Rider) TRACE(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("TRACE", path, handlers...)
 }
 
-func (r *rider) CONNECT(path string, handlers ...HandlerFunc) {
+func (r *Rider) CONNECT(path string, handlers ...HandlerFunc) {
 	r.addRiderRouter("CONNECT", path, handlers...)
 }
 
 //返回服务内部的http服务入口
-func (r *rider) GetServer() *HttpServer {
+func (r *Rider) GetServer() *HttpServer {
 	return r.server
 }
 
 // 返回http.Server供自定义
-func (r *rider) GetHttpServer() *http.Server {
+func (r *Rider) GetHttpServer() *http.Server {
 	return r.appServer
 }
 
 //为app服务添加中间处理
-func (r *rider) USE(handlers ...HandlerFunc) {
+func (r *Rider) USE(handlers ...HandlerFunc) {
 	r.routers.Middleware = append(r.routers.Middleware, handlers...)
 }
 
 //重写错误处理
-func (r *rider) Error(errorHandle func(c Context, err string, code int)) {
+func (r *Rider) Error(errorHandle func(c Context, err string, code int)) {
 	ErrorHandle = errorHandle
 }
 
 //设置模板路径（默认不缓存）
 //tplDir以"/"开头，不会对其进行操作。如果直接以路径开头的，前面会默认跟上当前工作路径
 // 调用该方法，默认启用模版
-func (r *rider) SetViews(tplDir string, extName string, funcMap template.FuncMap) {
+func (r *Rider) SetViews(tplDir string, extName string, funcMap template.FuncMap) {
 	if !(strings.HasPrefix(tplDir, "/")) {
 		tplDir = filepath.Join(file.GetCWD(), tplDir)
 	}
@@ -292,7 +292,7 @@ func (r *rider) SetViews(tplDir string, extName string, funcMap template.FuncMap
 }
 
 // 将模板注册到服务中
-func (r *rider) registerTemp() {
+func (r *Rider) registerTemp() {
 	if !(r.GetServer().openRender) {
 		return
 	}
@@ -305,14 +305,14 @@ func (r *rider) registerTemp() {
 
 //设置模板接口 (实现BaseRender接口的Render方法)
 //须在SetViews方法之前调用
-func (r *rider) ViewEngine(render BaseRender) {
+func (r *Rider) ViewEngine(render BaseRender) {
 	r.GetServer().tplsRender = render
 }
 
 //设置静态文件目录
 // staticPath为文件在服务器的实际未知
 // prefix，指客户端请求时的虚拟路径
-func (r *rider) SetStatic(staticPath string, prefix string) {
+func (r *Rider) SetStatic(staticPath string, prefix string) {
 	if !(strings.HasPrefix(staticPath, "/")) {
 		staticPath = filepath.Join(file.GetCWD(), staticPath)
 	}
@@ -336,23 +336,23 @@ func (r *rider) SetStatic(staticPath string, prefix string) {
 }
 
 //引入日志模块
-func (r *rider) Logger(level int) *logger.LogQueue {
+func (r *Rider) Logger(level int) *logger.LogQueue {
 	//r.server.logger = logger.NewLogger()
 	r.server.logger.SetLevel(level)
 	return r.server.logger
 }
 
 //获取日志
-func (r *rider) GetLogger() *logger.LogQueue {
+func (r *Rider) GetLogger() *logger.LogQueue {
 	return r.server.logger
 }
 
 // 设置跨域信息
-func (r *rider) SetAccessCtl(access func(c Context) *AccessControl) {
+func (r *Rider) SetAccessCtl(access func(c Context) *AccessControl) {
 	r.server.accessControl = access
 }
 
 // 请求处理完成，自定义事件（比如自定义日志打印，自定义日志库）
-func (r *rider) AfterHttpResponse(ahf func(Context, int, time.Duration)) {
+func (r *Rider) AfterHttpResponse(ahf func(Context, int, time.Duration)) {
 	afterHttpResponse = ahf
 }
