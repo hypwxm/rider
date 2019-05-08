@@ -10,18 +10,19 @@ import (
 )
 
 type riderJwter struct {
-	jwt     *jwt.Jwter
-	context Context
-	expires time.Duration
+	jwt      *jwt.Jwter
+	context  Context
+	expires  time.Duration
+	tokenKey string
 }
 
-func RiderJwt(secret string, expires time.Duration) HandlerFunc {
+func RiderJwt(tokenKey string, secret string, expires time.Duration) HandlerFunc {
 	return func(c Context) {
-		rj := &riderJwter{context: c, expires: expires}
+		rj := &riderJwter{context: c, expires: expires, tokenKey: tokenKey}
 		c.setJwt(rj)
 
 		// 如果是app进行的请求，token回放在请求头里面，headers的token优先级大于cookie，所以先验证headers
-		if token := c.HeaderValue("token"); token != "" {
+		if token := c.HeaderValue(tokenKey); token != "" {
 			claims, err := jwt.ValidateToken(token, secret)
 			if err == nil {
 				//token通过验证
@@ -32,7 +33,7 @@ func RiderJwt(secret string, expires time.Duration) HandlerFunc {
 				c.Next()
 				return
 			}
-		} else if token, err := c.CookieValue("token"); err == nil {
+		} else if token, err := c.CookieValue(tokenKey); err == nil {
 			//如果cookie里面存在token，验证token
 			claims, err := jwt.ValidateToken(token, secret)
 			if err == nil {
@@ -53,7 +54,7 @@ func RiderJwt(secret string, expires time.Duration) HandlerFunc {
 			return
 		}
 		c.SetCookie(http.Cookie{
-			Name:     "token",
+			Name:     tokenKey,
 			Value:    rj.jwt.TokenString,
 			MaxAge:   int(expires),
 			HttpOnly: true,
@@ -69,7 +70,7 @@ func (rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 		return "", err
 	}
 	rj.context.SetCookie(http.Cookie{
-		Name:     "token",
+		Name:     rj.tokenKey,
 		Value:    tokenString,
 		MaxAge:   int(rj.expires),
 		HttpOnly: true,
