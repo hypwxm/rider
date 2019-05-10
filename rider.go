@@ -14,6 +14,7 @@ package rider // import "github.com/hypwxm/rider"
 
 import (
 	ctxt "context"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -126,6 +127,9 @@ func (r *Rider) Listen(port string) (err error) {
 	r.appServer.ReadTimeout = readTimeout
 	r.appServer.WriteTimeout = writerTimeout
 	r.appServer.MaxHeaderBytes = maxHeaderBytes
+
+	fmt.Printf("The service has been started on port %v \n", port)
+
 	err = r.appServer.ListenAndServe()
 	if err != nil {
 		r.server.logger.ERROR(err.Error())
