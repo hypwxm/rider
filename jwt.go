@@ -61,7 +61,8 @@ func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCoo
 			c.Next(NError{500, err.Error()})
 			return
 		}
-		c.SetCookie(http.Cookie{
+
+		cookie := http.Cookie{
 			Name:     tokenKey,
 			Value:    rj.jwt.TokenString,
 			MaxAge:   int(expires + 100000),
@@ -70,7 +71,16 @@ func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCoo
 			SameSite: riderCookie.SameSite,
 			Raw:      riderCookie.Raw,
 			Unparsed: riderCookie.Unparsed,
-		})
+		}
+
+		if riderCookie != nil {
+			cookie.HttpOnly = riderCookie.HttpOnly
+			cookie.Secure = riderCookie.Secure
+			cookie.SameSite = riderCookie.SameSite
+			cookie.Raw = riderCookie.Raw
+			cookie.Unparsed = riderCookie.Unparsed
+		}
+		c.SetCookie(cookie)
 		c.Next()
 	}
 }
@@ -81,16 +91,19 @@ func (rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	rj.context.SetCookie(http.Cookie{
-		Name:     rj.tokenKey,
-		Value:    tokenString,
-		MaxAge:   int(rj.expires + 10000),
-		HttpOnly: rj.riderCookie.HttpOnly,
-		Secure:   rj.riderCookie.Secure,
-		SameSite: rj.riderCookie.SameSite,
-		Raw:      rj.riderCookie.Raw,
-		Unparsed: rj.riderCookie.Unparsed,
-	})
+	cookie := http.Cookie{
+		Name:   rj.tokenKey,
+		Value:  tokenString,
+		MaxAge: int(rj.expires + 10000),
+	}
+	if rj.riderCookie != nil {
+		cookie.HttpOnly = rj.riderCookie.HttpOnly
+		cookie.Secure = rj.riderCookie.Secure
+		cookie.SameSite = rj.riderCookie.SameSite
+		cookie.Raw = rj.riderCookie.Raw
+		cookie.Unparsed = rj.riderCookie.Unparsed
+	}
+	rj.context.SetCookie(cookie)
 	return tokenString, nil
 }
 
