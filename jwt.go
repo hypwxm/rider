@@ -65,7 +65,7 @@ func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCoo
 		cookie := http.Cookie{
 			Name:   tokenKey,
 			Value:  rj.jwt.TokenString,
-			MaxAge: int(expires + 100000),
+			MaxAge: int(expires),
 		}
 
 		if riderCookie != nil {
@@ -89,7 +89,7 @@ func (rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 	cookie := http.Cookie{
 		Name:   rj.tokenKey,
 		Value:  tokenString,
-		MaxAge: int(rj.expires + 10000),
+		MaxAge: int(rj.expires),
 	}
 	if rj.riderCookie != nil {
 		cookie.HttpOnly = rj.riderCookie.HttpOnly
