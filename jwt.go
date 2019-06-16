@@ -10,45 +10,55 @@ import (
 )
 
 type riderJwter struct {
-	jwt      *jwt.Jwter
-	context  Context
-	expires  time.Duration
-	tokenKey string
+	jwt         *jwt.Jwter
+	context     Context
+	expires     time.Duration
+	tokenKey    string
+	riderCookie *RiderCookie
 }
 
-func RiderJwt(tokenKey string, secret string, expires time.Duration) HandlerFunc {
+type RiderCookie struct {
+	Secure   bool
+	HttpOnly bool
+	SameSite http.SameSite
+	Raw      string
+	Unparsed []string // Raw text of unparsed attribute-value pairs
+}
+
+func RiderJwt(tokenKey string, secret string, expires time.Duration, riderCookie *RiderCookie) HandlerFunc {
 	return func(c Context) {
-		rj := &riderJwter{context: c, expires: expires, tokenKey: tokenKey}
+		rj := &riderJwter{
+			context:     c,
+			expires:     expires,
+			tokenKey:    tokenKey,
+			riderCookie: riderCookie,
+		}
 		c.setJwt(rj)
 
+		var claims jwtgo.MapClaims
+		var err error
+		var token string
 		// 如果是app进行的请求，token回放在请求头里面，headers的token优先级大于cookie，所以先验证headers
-		if token := c.HeaderValue(tokenKey); token != "" {
-			claims, err := jwt.ValidateToken(token, secret)
-			if err == nil {
-				//token通过验证
-				//这里即使初始化了expires，但是不set，delete，对token重新赋值，expires不会起作用
-				rj.jwt = jwt.NewJWTer(secret, expires)
-				rj.jwt.TokenString = token
-				rj.jwt.Claims = claims
-				c.Next()
-				return
-			}
-		} else if token, err := c.CookieValue(tokenKey); err == nil {
+		if token = c.HeaderValue(tokenKey); token != "" {
+			claims, err = jwt.ValidateToken(token, secret)
+		} else if token, err = c.CookieValue(tokenKey); err == nil {
 			//如果cookie里面存在token，验证token
-			claims, err := jwt.ValidateToken(token, secret)
-			if err == nil {
-				//token通过验证
-				//这里即使初始化了expires，但是不set，delete，对token重新赋值，expires不会起作用
-				rj.jwt = jwt.NewJWTer(secret, expires)
-				rj.jwt.TokenString = token
-				rj.jwt.Claims = claims
-				c.Next()
-				return
-			}
+			claims, err = jwt.ValidateToken(token, secret)
 		}
+
+		if err == nil {
+			//token通过验证
+			//这里即使初始化了expires，但是不set，delete，对token重新赋值，expires不会起作用
+			rj.jwt = jwt.NewJWTer(secret, expires)
+			rj.jwt.TokenString = token
+			rj.jwt.Claims = claims
+			c.Next()
+			return
+		}
+
 		//请求中的cookie不存在token，或者token验证不通过
 		rj.jwt = jwt.NewJWTer(secret, expires)
-		_, err := rj.jwt.CreateJwt(nil)
+		_, err = rj.jwt.CreateJwt(nil)
 		if err != nil {
 			c.Next(NError{500, err.Error()})
 			return
@@ -57,7 +67,11 @@ func RiderJwt(tokenKey string, secret string, expires time.Duration) HandlerFunc
 			Name:     tokenKey,
 			Value:    rj.jwt.TokenString,
 			MaxAge:   int(expires),
-			HttpOnly: true,
+			HttpOnly: riderCookie.HttpOnly,
+			Secure:   riderCookie.Secure,
+			SameSite: riderCookie.SameSite,
+			Raw:      riderCookie.Raw,
+			Unparsed: riderCookie.Unparsed,
 		})
 		c.Next()
 	}
@@ -73,7 +87,11 @@ func (rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 		Name:     rj.tokenKey,
 		Value:    tokenString,
 		MaxAge:   int(rj.expires),
-		HttpOnly: true,
+		HttpOnly: rj.riderCookie.HttpOnly,
+		Secure:   rj.riderCookie.Secure,
+		SameSite: rj.riderCookie.SameSite,
+		Raw:      rj.riderCookie.Raw,
+		Unparsed: rj.riderCookie.Unparsed,
 	})
 	return tokenString, nil
 }
