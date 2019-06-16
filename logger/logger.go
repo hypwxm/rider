@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -251,7 +250,7 @@ func (lq *LogQueue) PANIC(message ...interface{}) (*logCon, error) {
 			log.Println("error when debugLevel called in runtime")
 			return nil, err
 		}
-		lc.Message = append(lc.Message, "\r\n", debug.Stack(), "\r\n---")
+		lc.Message = append(lc.Message, "\r\n---")
 		for _, mess := range lc.Message {
 			lc.ColorMessageStr += RedBoldText(mess) + " "
 			lc.MessageStr += fmt.Sprintf("%+v", mess) + " "

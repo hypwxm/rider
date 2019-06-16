@@ -43,14 +43,14 @@ import (
 type Jwter struct {
 	SecretKey   string
 	TokenString string
-	Expires     time.Time
+	Expires     float64
 	Claims      jwtgo.MapClaims
 }
 
-func NewJWTer(secretKey string, expires time.Duration) *Jwter {
+func NewJWTer(secretKey string, expires int) *Jwter {
 	j := &Jwter{
 		SecretKey: secretKey,
-		Expires:   time.Now().Add(expires),
+		Expires:   float64(time.Now().Unix() + int64(expires)),
 		Claims:    make(map[string]interface{}),
 	}
 	return j
@@ -64,7 +64,9 @@ func (j *Jwter) CreateJwt(data map[string]interface{}) (string, error) {
 	for k, v := range data {
 		j.Claims[k] = v
 	}
+
 	//设置过期时间
+	// 计算方式为，1970-1-1开始到目前的秒数 + 具体超时
 	j.Claims["exp"] = j.Expires
 	token := jwtgo.NewWithClaims(jwtgo.SigningMethodHS256, j.Claims)
 	tokenString, err := token.SignedString([]byte(j.SecretKey))

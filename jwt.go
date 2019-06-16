@@ -2,7 +2,6 @@ package rider
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/hypwxm/rider/jwt"
 
@@ -12,7 +11,7 @@ import (
 type riderJwter struct {
 	jwt         *jwt.Jwter
 	context     Context
-	expires     time.Duration
+	expires     int
 	tokenKey    string
 	riderCookie *RiderCookie
 }
@@ -25,7 +24,7 @@ type RiderCookie struct {
 	Unparsed []string // Raw text of unparsed attribute-value pairs
 }
 
-func RiderJwt(tokenKey string, secret string, expires time.Duration, riderCookie *RiderCookie) HandlerFunc {
+func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCookie) HandlerFunc {
 	return func(c Context) {
 		rj := &riderJwter{
 			context:     c,
@@ -45,7 +44,6 @@ func RiderJwt(tokenKey string, secret string, expires time.Duration, riderCookie
 			//如果cookie里面存在token，验证token
 			claims, err = jwt.ValidateToken(token, secret)
 		}
-
 		if err == nil {
 			//token通过验证
 			//这里即使初始化了expires，但是不set，delete，对token重新赋值，expires不会起作用
@@ -66,7 +64,7 @@ func RiderJwt(tokenKey string, secret string, expires time.Duration, riderCookie
 		c.SetCookie(http.Cookie{
 			Name:     tokenKey,
 			Value:    rj.jwt.TokenString,
-			MaxAge:   int(expires),
+			MaxAge:   int(expires + 100000),
 			HttpOnly: riderCookie.HttpOnly,
 			Secure:   riderCookie.Secure,
 			SameSite: riderCookie.SameSite,
@@ -86,7 +84,7 @@ func (rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 	rj.context.SetCookie(http.Cookie{
 		Name:     rj.tokenKey,
 		Value:    tokenString,
-		MaxAge:   int(rj.expires),
+		MaxAge:   int(rj.expires + 10000),
 		HttpOnly: rj.riderCookie.HttpOnly,
 		Secure:   rj.riderCookie.Secure,
 		SameSite: rj.riderCookie.SameSite,
