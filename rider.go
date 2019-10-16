@@ -156,6 +156,10 @@ func (r *Rider) Routers() *Router {
 	return r.routers
 }
 
+func (r *Rider) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+
+}
+
 //http请求的方法的入口（ANY, GET, POST...VIA）
 //path：一个跟路径，函数内部根据这个根路径创建一个根路由routers，用来管理router子路由
 //router：这个根路径对应的子路由入口。
@@ -359,4 +363,9 @@ func (r *Rider) SetAccessCtl(access func(c Context) *AccessControl) {
 // 请求处理完成，自定义事件（比如自定义日志打印，自定义日志库）
 func (r *Rider) AfterHttpResponse(ahf func(Context, int, time.Duration)) {
 	afterHttpResponse = ahf
+}
+
+// 获取路由信息
+func (r *Rider) GetRoutes() *Router {
+	return r.routers
 }
