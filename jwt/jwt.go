@@ -100,6 +100,10 @@ func ValidateToken(tokenString string, secretKey string) (jwtgo.MapClaims, error
 		},
 	)
 
+	if err != nil {
+		return nil, err
+	}
+
 	if !token.Valid {
 		return nil, errors.New("invalid token")
 	} else if ve, ok := err.(*jwtgo.ValidationError); ok {
