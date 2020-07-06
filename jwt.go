@@ -24,7 +24,7 @@ type RiderCookie struct {
 	Unparsed []string // Raw text of unparsed attribute-value pairs
 }
 
-func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCookie) HandlerFunc {
+func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCookie, useCookie bool) HandlerFunc {
 	return func(c Context) {
 		rj := &riderJwter{
 			context:     c,
@@ -62,20 +62,22 @@ func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCoo
 			return
 		}
 
-		cookie := http.Cookie{
-			Name:   tokenKey,
-			Value:  rj.jwt.TokenString,
-			MaxAge: int(expires),
-		}
+		if useCookie {
+			cookie := http.Cookie{
+				Name:   tokenKey,
+				Value:  rj.jwt.TokenString,
+				MaxAge: int(expires),
+			}
 
-		if riderCookie != nil {
-			cookie.HttpOnly = riderCookie.HttpOnly
-			cookie.Secure = riderCookie.Secure
-			cookie.SameSite = riderCookie.SameSite
-			cookie.Raw = riderCookie.Raw
-			cookie.Unparsed = riderCookie.Unparsed
+			if riderCookie != nil {
+				cookie.HttpOnly = riderCookie.HttpOnly
+				cookie.Secure = riderCookie.Secure
+				cookie.SameSite = riderCookie.SameSite
+				cookie.Raw = riderCookie.Raw
+				cookie.Unparsed = riderCookie.Unparsed
+			}
+			c.SetCookie(cookie)
 		}
-		c.SetCookie(cookie)
 		c.Next()
 	}
 }
