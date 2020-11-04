@@ -130,9 +130,9 @@ func (r *Router) getByPath(path string, request *Request) handlerRouter {
 		}
 
 		//判断正则匹配
-		//cleanPath := strings.Replace(k, "/", "\\/", -1)
+		cleanPath := strings.Replace(k, "\\", "/", -1)
 		//fmt.Println(cleanPath)
-		reg, err := regexp.Compile("^" + k + "$")
+		reg, err := regexp.Compile("^" + cleanPath + "$")
 		if err != nil {
 			panic(err)
 		}

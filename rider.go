@@ -321,8 +321,13 @@ func (r *Rider) ViewEngine(render BaseRender) {
 // staticPath为文件在服务器的实际未知
 // prefix，指客户端请求时的虚拟路径
 func (r *Rider) SetStatic(staticPath string, prefix string) {
-	if !(strings.HasPrefix(staticPath, "/")) {
-		staticPath = filepath.Join(file.GetCWD(), staticPath)
+	staticPath = strings.Replace(staticPath, "\\", "/", -1)
+	if !file.IsExist(staticPath) {
+		err := os.MkdirAll(staticPath, os.ModePerm)
+		if err != nil {
+			r.server.logger.FATAL(err.Error())
+			return
+		}
 	}
 	f, err := os.Stat(staticPath)
 	if err != nil {
