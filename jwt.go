@@ -14,6 +14,7 @@ type riderJwter struct {
 	expires     int
 	tokenKey    string
 	riderCookie *RiderCookie
+	useCookie   bool
 }
 
 type RiderCookie struct {
@@ -31,6 +32,7 @@ func RiderJwt(tokenKey string, secret string, expires int, riderCookie *RiderCoo
 			expires:     expires,
 			tokenKey:    tokenKey,
 			riderCookie: riderCookie,
+			useCookie:   useCookie,
 		}
 		c.setJwt(rj)
 
@@ -88,19 +90,21 @@ func (rj *riderJwter) SetTokenCookie(claims jwtgo.MapClaims) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cookie := http.Cookie{
-		Name:   rj.tokenKey,
-		Value:  tokenString,
-		MaxAge: int(rj.expires),
+	if rj.useCookie {
+		cookie := http.Cookie{
+			Name:   rj.tokenKey,
+			Value:  tokenString,
+			MaxAge: int(rj.expires),
+		}
+		if rj.riderCookie != nil {
+			cookie.HttpOnly = rj.riderCookie.HttpOnly
+			cookie.Secure = rj.riderCookie.Secure
+			cookie.SameSite = rj.riderCookie.SameSite
+			cookie.Raw = rj.riderCookie.Raw
+			cookie.Unparsed = rj.riderCookie.Unparsed
+		}
+		rj.context.SetCookie(cookie)
 	}
-	if rj.riderCookie != nil {
-		cookie.HttpOnly = rj.riderCookie.HttpOnly
-		cookie.Secure = rj.riderCookie.Secure
-		cookie.SameSite = rj.riderCookie.SameSite
-		cookie.Raw = rj.riderCookie.Raw
-		cookie.Unparsed = rj.riderCookie.Unparsed
-	}
-	rj.context.SetCookie(cookie)
 	return tokenString, nil
 }
 
