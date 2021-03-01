@@ -29,14 +29,14 @@ import (
 )
 
 var (
-	addr                    = ":8000"
-	readTimeout             = 10 * time.Second
-	writerTimeout           = 60 * time.Second
-	maxHeaderBytes          = 1 << 20 //1MB
-	defaultMultipartBodySze = 32 << 20
-	ENV_Production          = "production"
-	ENV_Development         = "development"
-	ENV_Debug               = "debug"
+	addr                          = ":8000"
+	readTimeout                   = 10 * time.Second
+	writerTimeout                 = 60 * time.Second
+	maxHeaderBytes                = 1 << 20 //1MB
+	defaultMultipartBodySze int64 = 32 << 20
+	ENV_Production                = "production"
+	ENV_Development               = "development"
+	ENV_Debug                     = "debug"
 )
 
 //默认的执行的系统的环境，生产者环境
