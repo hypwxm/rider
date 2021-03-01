@@ -387,6 +387,6 @@ func (r *Rider) SetHttpMaxHeaderBytes(d int) {
 	maxHeaderBytes = d
 }
 
-func (r *Rider) SetHttpMaxDefaultMultipartBodySze(d int) {
+func (r *Rider) SetHttpMaxDefaultMultipartBodySze(d int64) {
 	defaultMultipartBodySze = d
 }
