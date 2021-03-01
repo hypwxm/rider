@@ -28,7 +28,7 @@ import (
 	"github.com/hypwxm/rider/utils/file"
 )
 
-const (
+var (
 	addr                    = ":8000"
 	readTimeout             = 10 * time.Second
 	writerTimeout           = 60 * time.Second
@@ -373,4 +373,20 @@ func (r *Rider) AfterHttpResponse(ahf func(Context, int, time.Duration)) {
 // 获取路由信息
 func (r *Rider) GetRoutes() *Router {
 	return r.routers
+}
+
+func (r *Rider) SetHttpReadTimeout(d time.Duration) {
+	readTimeout = d
+}
+
+func (r *Rider) SetHttpWriteTimeout(d time.Duration) {
+	writerTimeout = d
+}
+
+func (r *Rider) SetHttpMaxHeaderBytes(d int) {
+	maxHeaderBytes = d
+}
+
+func (r *Rider) SetHttpMaxDefaultMultipartBodySze(d int) {
+	defaultMultipartBodySze = d
 }
