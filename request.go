@@ -96,9 +96,9 @@ func (req *Request) FormFile(key string) (*UploadFile, error) {
 	file, header, err := req.request.FormFile(key)
 	if err != nil {
 		return nil, err
-	} else {
-		return NewUploadFile(file, header), nil
 	}
+	defer file.Close()
+	return NewUploadFile(file, header), nil
 }
 
 //根据key返回key的文件列表

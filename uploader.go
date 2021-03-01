@@ -34,9 +34,18 @@ type size interface {
 	Size() int64
 }
 
+// 获取文件信息的接口
+type Stat interface {
+	Stat() (os.FileInfo, error)
+}
+
 //获取上传的文件大小，具体需要的时候在进行赋值
 func (f *UploadFile) Size() int64 {
 	if f.size <= 0 {
+		if statInterface, ok := f.File.(Stat); ok {
+			fileInfo, _ := statInterface.Stat()
+			f.size = fileInfo.Size()
+		}
 		if sizer, ok := f.File.(size); ok {
 			f.size = sizer.Size()
 		}
